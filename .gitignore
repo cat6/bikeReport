@@ -1,3 +1,9 @@
+# PHP ini files
+bikereport.ini
+
+# Project notes
+notes.txt
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
@@ -26,7 +32,8 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>City Locator</title>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+
+<h3>City Weather Report (Beta)</h3>
+
+<form>
+    City:
+    <select name="cityDropDown">
+        <option value="toronto">Toronto</option>
+        <option value="new york">New York</option>
+        <option value="portland">Portland, OR</option>
+        <option value="other">(other)</option>
+    </select>
+    <br/><br/>
+    Units
+    <select name="units">
+        <option value="CA">Canadian(default)</option>
+        <option value="US">USA</options>
+        <option value="UK">UK</options>
+    </select>
+    <br/><br/>
+    <input type=""  City Name: <input type="text" name="cityInput" id="cityInput"><br/>
+    <br/>
+    <button type="button" id="checkButton" onclick="getCityData(this.form)">Check</button>
+</form>
+
+<div id="report"></div>
+
+<script>
+function getCityData(frm)
+{
+    // Default cities data: lat, lng, cityName, locality, country
+    majorCities = [
+        [43.653226, -79.3831843, "Toronto", "Ontario", "Canada"],
+        [40.7127837, -74.0059413, "New York", "New York", "United States"],
+        [45.5234515, -122.6762071, "Portland", "Oregon", "United States"],
+    ];
+    units = frm.units.value;
+    output = "";
+
+    if(frm.cityDropDown.value == "other" && frm.cityInput.value == "")
+    {
+        window.alert("Please either select a city from the drop-down menu or enter a value for your city");
+    }
+
+    // Parse form data
+    if(frm.cityDropDown.value == "other")
+    {
+        // Perform Google geolocation
+        var cityXML = new XMLHttpRequest();
+        var cityURL1 = "http://maps.googleapis.com/maps/api/geocode/json?address=";
+        var cityName = frm.cityInput.value;
+        var cityURL2 = "&sensor=false";
+        var cityURL = cityURL1 + cityName + cityURL2;
+
+        frm.cityInput.value = "";
+
+        cityXML.onreadystatechange=function() 
+        {
+            if (cityXML.readyState == 4 && cityXML.status == 200) 
+            {
+                // Generates a list of cities with the name the user input
+                candidates = parseCity(cityXML.responseText, cityName);
+            }
+        }
+        cityXML.open("GET", cityURL, true);
+        cityXML.send();
+    }
+    else
+    {
+        // foreach over an array of predefined city data; if found, populate the results and move on; else, use the city name in a search-mode result
+        for(i = 0; i < majorCities.length; i++)
+        {
+            if(frm.cityDropDown.value.toLowerCase() == majorCities[i][2].toLowerCase())
+            {
+                lat = majorCities[i][0];
+                lng = majorCities[i][1];
+                cityName = majorCities[i][2];
+                locality = majorCities[i][3];
+                country = majorCities[i][4];
+                
+                relocate("bikeReport.php?cityName=" + cityName + "&lat=" + lat + "&lng=" + lng + "&locality=" + locality + "&country=" + country + "&units=" + units);
+            }
+            else
+            {
+                // As a backup.
+                var cityName = frm.cityDropDown.value;
+            }
+        }
+        i = 0;
+    }
+}
+
+function parseCity(response, cityName) 
+{
+    // Parse response data and glean location data.  Accept only results that are valid cities and not place-names similar to cityName
+    var jsonArr = JSON.parse(response);
+    var i;
+    var j;
+    var output = "";
+    var lat = "";
+    var lng = "";
+    var cityFlag = 0;
+    var cityCount = 0;
+
+    /* 
+        Array for storing candiate cities for the user to select from:
+        [0]: latitude
+        [1]: longitude
+        [2]: city name      (e.g. Toronto)
+        [3]: city locality  (e.g. Ontario)
+        [4]: Country        (e.g. Canada)
+    */ 
+    var possibleCities = [];
+
+    for(i = 0; i < jsonArr.results.length; i++)
+    {
+        // possibleCities.push(candidate);
+        candidate = [];
+        candidate[0] = jsonArr.results[i].geometry.location.lat;
+        candidate[1] = jsonArr.results[i].geometry.location.lng;
+
+        output += "<table>";
+        for(j = 0; j < jsonArr.results[i].address_components.length; j++)
+        {
+            if(jsonArr.results[i].address_components[j].types[0] == "locality")
+            {
+                // Not all localities are proper cities.  Some are "routes", etc..  Filter these out.
+                if(jsonArr.results[i].address_components[j].long_name.toLowerCase() == cityName.toLowerCase())
+                {
+                    candidate[2] = jsonArr.results[i].address_components[j].long_name;
+                    output += "<td>";
+                    output += "<tr><td><b>City: </b></td><td>" + candidate[2] + "</td></tr>";
+                    cityFlag = 1;
+                }
+            }  
+            if(jsonArr.results[i].address_components[j].types[0] == "country" && cityFlag == 1)
+            {
+                candidate[4] = jsonArr.results[i].address_components[j].long_name;
+                output += "<tr><td><b>Country: </b></td><td>" + candidate[4] + "</td></tr>";
+            }
+            if(jsonArr.results[i].address_components[j].types[0] == "administrative_area_level_1" && cityFlag == 1)
+            {
+                candidate[3] = jsonArr.results[i].address_components[2].long_name;
+                output += "<tr><td><b>State/Province/Locality:</b></td><td> " + candidate[3] + "</td></tr>";
+            }
+        }
+        j = 0;
+
+        if(cityFlag == 1)
+        {
+            output += "<tr><td><b>Co-ordinates: </b></tr><br/>" + "<td><b>latitude</b> " + candidate[0] + " <b>by longitude</b> " + candidate[1] + "</td></tr><br/><br/>";
+
+            output += "</table>";
+            cityCount++;
+        }
+        else
+        {
+            output += "</table>";
+        }
+
+        if( (typeof(candidate[0]) != 'undefined') || (typeof(candidate[1]) != 'undefined') || ((typeof candidate[2]) != 'undefined') || ((typeof candidate[3]) != 'undefined') || ((typeof candidate[4]) != 'undefined') )
+        {
+            possibleCities.push(candidate);
+        }
+        cityFlag = 0;
+    }
+    output += "<br/><b>Number of cities with this name found:</b> " + cityCount + "<br/>";
+
+    // TESTING
+    //report(output);
+
+    didYouMean(possibleCities);
+
+    return possibleCities;
+}
+
+function report(output)
+{
+    // Actually write the output string to the document
+    document.getElementById("report").innerHTML = output;    
+}
+
+function relocate(url)
+{
+    window.location = url;
+}
+
+function didYouMean(didYouMeanCities)
+{
+    // Returns a single user-choosen city's data, given an array of cities.
+    didYouMeanOutput = "<p>Did you mean...?</p>";
+    didYouMeanOutput += "<p>";
+    for(i = 0; i < didYouMeanCities.length; i++)
+    {
+        if(typeof(didYouMeanCities[i][2]) != 'undefined')
+        {
+            didYouMeanOutput += "<a href='bikeReport.php?cityName=" 
+            + didYouMeanCities[i][2]  + "&lat=" + didYouMeanCities[i][0]  + "&lng=" + didYouMeanCities[i][1]  
+            + "&locality=" + didYouMeanCities[i][3]  + "&country=" + didYouMeanCities[i][4] + "&units=" + units + "'>" 
+
+            + didYouMeanCities[i][2] + ", " + didYouMeanCities[i][3] + ", " + didYouMeanCities[i][4] 
+            + "</a><br/>"; 
+        }
+    }
+    didYouMeanOutput += "</p>";
+    report(didYouMeanOutput);
+}
+</script>
+
+</body>
+</html>
