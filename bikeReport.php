@@ -7,6 +7,20 @@ $lat = $_GET["lat"];
 $lng = $_GET["lng"];
 $units = $_GET["units"];
 
+$cityName = clean($cityName);
+$state = clean($state);
+$country = clean($country);
+$lat = clean($lat);
+$lng = clean($lng);
+$units = clean($units);
+
+function clean($str)
+{
+	$str = mb_convert_encoding($str, "UTF-8", "UTF-8");
+	$str = htmlentities($str, ENT_QUOTES, "UTF-8");
+	return $str;
+}
+// Acquire API credentials from an ini file.
 $ini_array = parse_ini_file("bikereport.ini", true);
 
 $weatherAPIKey = explode(', ', $ini_array['api_keys']['weather']);
