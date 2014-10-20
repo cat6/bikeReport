@@ -202,12 +202,27 @@ function didYouMean(didYouMeanCities)
     {
         if(typeof(didYouMeanCities[i][2]) != 'undefined')
         {
-            didYouMeanOutput += "<a href='bikeReport.php?cityName=" 
-            + didYouMeanCities[i][2]  + "&lat=" + didYouMeanCities[i][0]  + "&lng=" + didYouMeanCities[i][1]  
-            + "&locality=" + didYouMeanCities[i][3]  + "&country=" + didYouMeanCities[i][4] + "&units=" + units + "'>" 
+            didYouMeanOutput += "<a href='bikeReport.php?cityName=" + didYouMeanCities[i][2];
+            didYouMeanOutput += "&lat=" + didYouMeanCities[i][0];
+            didYouMeanOutput += "&lng=" + didYouMeanCities[i][1];
+            didYouMeanOutput += "&locality=" + didYouMeanCities[i][3];
+            didYouMeanOutput += "&country=" + didYouMeanCities[i][4];
+            didYouMeanOutput += "&units=" + units + "'>";
 
-            + didYouMeanCities[i][2] + ", " + didYouMeanCities[i][3] + ", " + didYouMeanCities[i][4] 
-            + "</a><br/>"; 
+            if(didYouMeanCities[i][2])
+            {
+                didYouMeanOutput += didYouMeanCities[i][2] + ", ";
+            }
+            if(didYouMeanCities[i][3])
+            {
+                didYouMeanOutput += didYouMeanCities[i][3] + ", ";
+            }
+            if(didYouMeanCities[i][4])
+            {
+                didYouMeanOutput += didYouMeanCities[i][4];
+            }
+
+            didYouMeanOutput += "</a><br/>"; 
         }
     }
     didYouMeanOutput += "</p>";
