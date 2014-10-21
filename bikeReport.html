@@ -4,6 +4,7 @@
 <head>
     <title>City Locator</title>
     <meta charset="UTF-8">
+    <script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
 </head>
 
 <body>
@@ -21,9 +22,9 @@
     <br/><br/>
     Units
     <select name="units">
-        <option value="CA">Canadian(default)</option>
-        <option value="US">USA</options>
-        <option value="UK">UK</options>
+        <option value="CA">Canadian(km/C)</option>
+        <option value="US">USA(mi/F)</options>
+        <option value="UK">UK(mi/C)</options>
     </select>
     <br/><br/>
     <input type=""  City Name: <input type="text" name="cityInput" id="cityInput"><br/>
@@ -33,7 +34,73 @@
 
 <div id="report"></div>
 
+<p id="userIP"></p>
+
 <script>
+// Get the User's IP Address
+$(document).ready(function () {
+    $.get('http://jsonip.com', function (res) {
+        tellIP(res.ip);
+    });
+});
+
+function tellIP(ip)
+{
+    ipXML = new XMLHttpRequest();
+    ipURL = "http://freegeoip.net/json/" + ip;
+
+    ipXML.onreadystatechange=function() 
+    {
+        if (ipXML.readyState == 4 && ipXML.status == 200) 
+        {
+            // Generates information about the user's location
+            userLocation = parseIP(ipXML.responseText);
+        }
+    }
+    ipXML.open("GET", ipURL, true);
+    ipXML.send();
+}
+
+function ipReport(ipURL,frm)
+{
+    units = frm.ipUnits.value;
+    relocate(ipURL + "&units=" + units);
+}
+
+function parseIP(res)
+{
+    // Parse json object with user location data
+    jsonArr = JSON.parse(res);
+    ip = jsonArr.ip;
+    cityName = jsonArr.city;
+    country = jsonArr.country_name;
+    lat = jsonArr.latitude;
+    lng = jsonArr.longitude;
+    locality = jsonArr.region_name;
+    units = "CA";   // NEED TO FIX SO ANY UNIT CAN BE CHOOSEN.
+
+    ipOutput = "Based upon your IP address (" + ip + "), you appear to be in " + cityName + ", " + country + ".<br/>  Would you like to get the report for " + cityName + "?";
+
+    ipOutput += "<form>";
+    ipOutput += "<select name='ipUnits'>";
+    ipOutput += "<option value='CA'>Canadian(km/C)</option>";
+    ipOutput += "<option value='US'>USA(mi/F)</options>";
+    ipOutput += "<option value='UK'>UK(km/C)</options>";
+    ipOutput += "</select><br/>";
+
+    ipURL = "bikeReport.php?cityName=" + cityName;
+    ipURL += "&lat=" + lat;
+    ipURL += "&lng=" + lng;
+    ipURL += "&locality=" + locality;
+    ipURL += "&country=" + country;
+
+    ipOutput += "<input type=button onClick='ipReport(ipURL,this.form)' value='Get Report'>";
+    ipOutput += "</form>";
+
+    // Prompt the user to use IP geolocation to generate a report
+    document.getElementById("userIP").innerHTML = ipOutput; 
+}
+
 function getCityData(frm)
 {
     // Default cities data: lat, lng, cityName, locality, country
@@ -54,11 +121,11 @@ function getCityData(frm)
     if(frm.cityDropDown.value == "other")
     {
         // Perform Google geolocation
-        var cityXML = new XMLHttpRequest();
-        var cityURL1 = "http://maps.googleapis.com/maps/api/geocode/json?address=";
-        var cityName = frm.cityInput.value;
-        var cityURL2 = "&sensor=false";
-        var cityURL = cityURL1 + cityName + cityURL2;
+        cityXML = new XMLHttpRequest();
+        cityURL1 = "http://maps.googleapis.com/maps/api/geocode/json?address=";
+        cityName = frm.cityInput.value;
+        cityURL2 = "&sensor=false";
+        cityURL = cityURL1 + cityName + cityURL2;
 
         frm.cityInput.value = "";
 

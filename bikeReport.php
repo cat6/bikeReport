@@ -30,6 +30,116 @@ $weatherAPIKey = $weatherAPIKey[0];
 	Functions
 */
 
+function unitChoice($units)
+{
+	// Returns variables for $endpoint and temp/speed terminology; assumes a valid unit choice.
+	// Return format: $ret($endpoint, $tempSuffix, $speedSuffix)
+	$ret = array();
+
+	if($units == "CA")
+	{
+		array_push($ret, "?units=ca", "C", "km/hr");
+	}
+	if($units == "US")
+	{
+		array_push($ret, "?units=us", "F", "mph");
+	}
+	if($units == "UK")
+	{
+		array_push($ret, "?units=uk", "C", "mph");
+	}
+	if($units != "CA" && $units != "US" && $units != "UK")
+	{
+		// Should not get here.  Return an error if input is incorrect.
+		return -1;
+	}
+	return $ret;
+
+}
+
+function convertSpeed($speed)
+{
+	// Converts speed (and distance) from mph to km/hr
+	return $speed * 1.6;
+}
+
+function convertTemp($temperature)
+{
+	// Converts temperature from F to C
+	return ($temperature * (9/5)) + 32;
+}
+
+function metascore($day, $units)
+{
+	// Returns a metscore for a day based upon the input conditions for that day.
+	// Assumes $day is an associative array 
+	$windSpeed = floatval($day[1]);
+	$precipProbab = floatval($day[3][2]);
+	$temperature = floatval($day[4][0]);
+	$icon = $day[5];
+
+	// Start off assuming perfect conditions
+	$score = 100;
+
+	// If CA, don't convert, if UK, convert mph to km/hr, if US, convert mph to km/hr AND convert F to C
+	if($units == "US")
+	{
+		$windSpeed = convertSpeed($windSpeed);
+		$temperature = convertTemp($temperature);
+	}
+	if($units == "UK")
+	{
+		$windSpeed = convertSpeed($windSpeed);
+	}
+
+	/*
+		Analysis
+	 	Now things should be (uniformly) in "Canadian" format.  Analyze the data and produce a metascore.
+	*/
+
+	// Deduct [3 points] for each km/hr of excessive wind
+	if($windSpeed > 10)
+	{
+		$score = $score - (3 * ($windSpeed - 10));
+	}
+	// Deduct [3 points] for each degree of excessively hot temperature
+	if($temperature > 25)
+	{
+		$score = $score - (3 * ($temperature - 25));
+	}
+	// Deduct [3 points] for each degree of excessively cold temperature
+	if($temperature < 10)
+	{
+		if($temperature == 0)
+		{
+			$score = $score - 30;
+		}
+
+		if($temperature > 0)
+		{
+			$score = $score - (3 * (10 - $temperature));
+		}
+		if($temperature < 0)
+		{
+			$score = $score - (3 * (-10 + $temperature)); 
+		}
+	}
+	// Set a floor of zero
+	if($score < 0)
+	{
+		$score = 0;
+	}
+
+	// If $precipProb is high, or if the conditons ($icon) contain bad words :P, then lower the score
+	if($icon == "rain" || $icon == "snow" || $icon == "sleet" || $icon == "hail")
+	{
+		// Than it's precipitating badly enough for a serious deduction (40% of what it would be otherwise)
+		$score = $score * 0.4;
+	}
+	$score = round($score);
+	return (string)$score;
+}
+
 function clean($str)
 {
 	// Returns a tidied-up string to prevent script injection, CX attacks, etc.; takes in a raw-input string, $str.
@@ -47,7 +157,7 @@ function compass($degrees)
 	return $compdir;
 }
 
-function reportWeekly($week)
+function reportWeekly($week, $units)
 {
 	// Reports the contents of an associative array, $week, containing data about the following week's weather forecast.
 	// Assumes a properly formatted $week associative array.
@@ -76,6 +186,9 @@ function reportWeekly($week)
 		print "Precipitation: " . $week[$i][3][0] . " / " . $week[$i][3][1] . " / " . $week[$i][3][2] . "<br/>";
 		print "Temperature: " . $week[$i][4][0] . " / " . $week[$i][4][1] . " / " . $week[$i][4][2] . " / " . $week[$i][4][3] . "<br/>";
 		print "Icon: " . $week[$i][5] . "<br/>";
+
+		print "Metascore: " . metascore($week[$i], $units) . "%<br/>";
+
 		print "</p>";
 		$today++;
 	}
@@ -89,23 +202,16 @@ function reportWeekly($week)
 $endpoint = "https://api.forecast.io/forecast/" . $weatherAPIKey . "/" . $lat . "," . $lng;
 
 // Modify units based on CA (canada), UK, or US (default if not modified).  SI available, but not used here.
-if($units == "CA")
+$unitSettings = unitChoice($units);
+if($unitSettings != -1)
 {
-	$endpoint .= "?units=ca";
-	$tempSuffix = "C";
-	$speedSuffix = "km/hr";
+	$endpoint .= $unitSettings[0];
+	$tempSuffix = $unitSettings[1];
+	$speedSuffix = $unitSettings[2];
 }
-if($units == "US")
+else
 {
-	$endpoint .="?units=us";
-	$tempSuffix = "F";
-	$speedSuffix = "mph";
-}
-if($units == "UK")
-{
-	$endpoint .= "?units=uk";
-	$tempSuffix = "C";
-	$speedSuffix = "mph";
+	die('Error processing units');
 }
 
 // setup curl to make a call to the endpoint
@@ -198,7 +304,7 @@ $output .= "<html>
 
   	" Bike Report</title>
  	<meta charset='UTF-8'>
-	<script src='jquery-1.11.1.js'></script>
+	<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
 	<script type='text/javascript' src='http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js'></script>
 
 	<style type='text/css'>
@@ -217,14 +323,13 @@ $output .= "<p><b>Present Conditions:</b> " . $currently . "</p>";
 $output .= "<p><b>Temperature: </b>" . round($temperature) . " " . $tempSuffix . "</p>";
 $output .= "<p><b>Wind Speed / Bearing:</b> " . round($windSpeed) . " " . $speedSuffix . " / " . $windBearing . " degrees (" . compass($windBearing) . ") / ";
 
-$output .= "<script type='text/javascript'>";
+$output .= "<script>";
 $output .= "$(document).ready(function(){";
 $output .= "$('#windArrow').rotate(" . $windBearing . ");";
 $output .= "});";
 $output .= "</script>";
 
 $output .= "<img src='arrow.gif' id='windArrow'></p>";
-
 
 $output .= "<p><b>Time Tomorrow: </b>" . (time() + 86400) . "</p>";
 $output .= "<p><b>24hr Forecast: </b>" . $nextDayForecast . "</p>";
@@ -235,7 +340,7 @@ print $output;
 $output = "";
 
 // Report the week's weather
-reportWeekly($weeklyWeather);
+reportWeekly($weeklyWeather, $units);
 
 $output .= "</body></html>";
 print $output;
