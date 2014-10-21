@@ -1,5 +1,10 @@
 <?php
 
+/*
+	Initialization
+*/
+
+// Basic Variables
 $cityName = $_GET["cityName"];
 $state = $_GET["locality"];
 $country = $_GET["country"];
@@ -7,6 +12,7 @@ $lat = $_GET["lat"];
 $lng = $_GET["lng"];
 $units = $_GET["units"];
 
+// Scrub variables 
 $cityName = clean($cityName);
 $state = clean($state);
 $country = clean($country);
@@ -14,8 +20,19 @@ $lat = clean($lat);
 $lng = clean($lng);
 $units = clean($units);
 
+// Acquire API credentials from an ini file.
+$ini_array = parse_ini_file("bikereport.ini", true);
+
+$weatherAPIKey = explode(', ', $ini_array['api_keys']['weather']);
+$weatherAPIKey = $weatherAPIKey[0];
+
+/*
+	Functions
+*/
+
 function clean($str)
 {
+	// Returns a tidied-up string to prevent script injection, CX attacks, etc.; takes in a raw-input string, $str.
 	$str = mb_convert_encoding($str, "UTF-8", "UTF-8");
 	$str = htmlentities($str, ENT_QUOTES, "UTF-8");
 	return $str;
@@ -23,6 +40,7 @@ function clean($str)
 
 function compass($degrees)
 {
+	// Returns a string representing a compass direction, as based upon an input degree value, $degrees.
 	$compass = array("N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW");
 	$compcount = round($degrees / 22.5);
 	$compdir = $compass[$compcount];
@@ -31,6 +49,8 @@ function compass($degrees)
 
 function reportWeekly($week)
 {
+	// Reports the contents of an associative array, $week, containing data about the following week's weather forecast.
+	// Assumes a properly formatted $week associative array.
 	$weekdays = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
 	$unixDay = mktime();
 	$today = date('N', $unixDay); // Returns 1-7
@@ -42,32 +62,30 @@ function reportWeekly($week)
 		if($today <= 6)
 		{
 			print "<p>";
-			print "<i>" . $weekdays[$today] . "</i>: " . $week[$i][0] . "<br/>";
-			print "Wind speed/bearing: " . $week[$i][1] . " / " . $week[$i][2] . "<br/>";
-			print "Precipitation: " . $week[$i][3][0] . " / " . $week[$i][3][1] . " / " . $week[$i][3][2] . "<br/>";
-			print "</p>";
+			print "<i>" . $weekdays[$today] . "</i>:<br/>";
+			print $week[$i][0] . "<br/>";
 		}
 		else
 		{
-			// We've gone off the end off the array
+			// We've gone off the end off the array, so compensate.
 			print "<p>";
-			print "<i>" . $weekdays[$today - 7] . "</i>: " . $week[$i][0] . "<br/>";
-			print "Wind speed/bearing: " . $week[$i][1] . " / " . $week[$i][2] . "<br/>";
-			print "Precipitation: " . $week[$i][3][0] . " / " . $week[$i][3][1] . " / " . $week[$i][3][2] . "<br/>";
-			print "</p>";
+			print "<i>" . $weekdays[$today - 7] . "</i>:<br/>";
+			print $week[$i][0] . "<br/>";
 		}
+		print "Wind speed/bearing: " . $week[$i][1] . " / " . $week[$i][2] . "<br/>";
+		print "Precipitation: " . $week[$i][3][0] . " / " . $week[$i][3][1] . " / " . $week[$i][3][2] . "<br/>";
+		print "Temperature: " . $week[$i][4][0] . " / " . $week[$i][4][1] . " / " . $week[$i][4][2] . " / " . $week[$i][4][3] . "<br/>";
+		print "Icon: " . $week[$i][5] . "<br/>";
+		print "</p>";
 		$today++;
 	}
 }
 
-// Acquire API credentials from an ini file.
-$ini_array = parse_ini_file("bikereport.ini", true);
+/*
+	Collect Weather Data
+*/
 
-$weatherAPIKey = explode(', ', $ini_array['api_keys']['weather']);
-$weatherAPIKey = $weatherAPIKey[0];
-//print "Weather key: " . $weatherAPIKey;
-
-// construct the query with our apikey and the query we want to make
+// Construct the query with our apikey and the query we want to make.
 $endpoint = "https://api.forecast.io/forecast/" . $weatherAPIKey . "/" . $lat . "," . $lng;
 
 // Modify units based on CA (canada), UK, or US (default if not modified).  SI available, but not used here.
@@ -106,12 +124,17 @@ curl_close($session);
 $json = json_decode($data);
 if ($search_results === NUL) die('Error parsing json');
 
+/*
+	Parse Weather Data
+*/
+
+// Today's weather
 $currently = $json->currently->summary;
 $temperature = $json->currently->temperature;
 $windSpeed = $json->currently->windSpeed;
 $windBearing = $json->currently->windBearing;
 
-// Daily has 7 members in data (one for each day, presumably)
+// Tomorrow's forecast
 $weeklyForecast = $json->daily->summary;
 $nextDayForecast = $json->daily->data[0]->summary;
 $nextDayTempMax = $json->daily->data[0]->temperatureMax;
@@ -132,13 +155,14 @@ $nextDayTempMin = $json->daily->data[0]->temperatureMin;
 		[i][4][1]: tempMax
 		[i][4][2]: apparentTempMin
 		[i][4][3]: apparentTempMax
-
+	[i][5]: Icon text
 */
 $weeklyWeather = array();
 
 // Array for temp use in building $weeklyWeather
 $dailyWeather = array();
 
+// Populate $weeklyWeather from the JSON data
 for($i = 0; $i < 7; $i++)
 {
 	$dailyWeather[0] = $json->daily->data[$i]->summary;
@@ -154,19 +178,35 @@ for($i = 0; $i < 7; $i++)
 	$dailyWeather[4][2] = $json->daily->data[$i]->apparentTemperatureMin;
 	$dailyWeather[4][3] = $json->daily->data[$i]->apparentTemperatureMax;
 
+	$dailyWeather[5] = $json->daily->data[$i]->icon;
+
 	// Push the temp on, then clear it
 	array_push($weeklyWeather, $dailyWeather);
 	$dailyWeather = array();
 }
 
+/*
+	Publish Weather Data
+*/
+
 $output = "";
+
 $output .= "<html>
  <head>
-  <title>The "
-  . $cityName .
+  	<title>The "
+  	. $cityName .
 
-  " Bike Report</title>
- <meta charset='UTF-8'>
+  	" Bike Report</title>
+ 	<meta charset='UTF-8'>
+	<script src='jquery-1.11.1.js'></script>
+	<script type='text/javascript' src='http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js'></script>
+
+	<style type='text/css'>
+		#image{
+  			margin:100px 100px;
+		}
+	</style>
+
  </head>
  <body>
 ";
@@ -175,7 +215,16 @@ $output .= "<p><b>Data:</b> " . $cityName . ", " . $state . ", " . $country . ",
 $output .= "<p><b>Time: </b>" . time() . "</p>";
 $output .= "<p><b>Present Conditions:</b> " . $currently . "</p>";
 $output .= "<p><b>Temperature: </b>" . round($temperature) . " " . $tempSuffix . "</p>";
-$output .= "<p><b>Wind Speed / Bearing:</b> " . round($windSpeed) . " " . $speedSuffix . " / " . $windBearing . " degrees (" . compass($windBearing) . ")</p>";
+$output .= "<p><b>Wind Speed / Bearing:</b> " . round($windSpeed) . " " . $speedSuffix . " / " . $windBearing . " degrees (" . compass($windBearing) . ") / ";
+
+$output .= "<script type='text/javascript'>";
+$output .= "$(document).ready(function(){";
+$output .= "$('#windArrow').rotate(" . $windBearing . ");";
+$output .= "});";
+$output .= "</script>";
+
+$output .= "<img src='arrow.gif' id='windArrow'></p>";
+
 
 $output .= "<p><b>Time Tomorrow: </b>" . (time() + 86400) . "</p>";
 $output .= "<p><b>24hr Forecast: </b>" . $nextDayForecast . "</p>";
