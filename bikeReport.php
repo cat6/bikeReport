@@ -30,6 +30,106 @@ $weatherAPIKey = $weatherAPIKey[0];
 	Functions
 */
 
+function startUntilBody($cityName)
+{
+	$startUntilBodyOutput = "<html>
+	<head>
+		<title>The " . $cityName . " Bike Report</title>
+	 	<meta charset='UTF-8'>
+
+		<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+		<!-- Rotation script for arrow representing wind direction -->
+		<script type='text/javascript' src='http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js'></script>
+		<!-- Google line graph -->
+		<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+
+		<style type='text/css'>
+			#image{
+	  			margin:100px 100px;
+			}
+		</style>
+
+	</head>
+	<body>
+	";
+	return $startUntilBodyOutput;
+}
+
+function rotateArrow($windBearing)
+{
+	$rotateArrowOutput = "<script>";
+	$rotateArrowOutput .= "$(document).ready(function(){";
+ 	$rotateArrowOutput .= "$('#windArrow').rotate(" . $windBearing . ");";
+	$rotateArrowOutput .= "});";
+	$rotateArrowOutput .= "</script>";
+
+	$rotateArrowOutput .= "<img src='arrow.gif' id='windArrow'></p>";
+
+	return $rotateArrowOutput;
+}
+
+function makeGraph($points)
+{
+	$graphOutput = "<script>
+      google.load('visualization', '1', {packages:['corechart']});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Day', 'Score'],
+          ";
+    // Pop off first element of $ponits--it's the starting weekday of the chart
+    $startDay = array_shift($points);
+
+    // Build an array of weekday names by reordering an extant array starting at sunday
+	$weekdays = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+
+	// Reorder the array so today is first 
+	for($i = 0; $i < $startDay; $i++)
+	{
+		$replace = array_shift($weekdays);
+		$weekdays[] = $replace;
+	}
+
+    // Foreach over remaining $points and add to the graph array
+    $i = 0;
+    foreach($points as $point)
+    {
+    	$graphOutput .= "['" . $weekdays[$i] . "', " . $point . "],";
+    	$i++;
+    }
+    // Pop the last char off of $graphOutput so there's no trailing comma
+    $graphOutput = substr($graphOutput, 0, -1);
+
+    	/* Example
+          ['2004',  1000],
+          ['2005',  1170],
+          ['2006',  660],
+          ['2007',  103]
+		*/
+    $graphOutput .= "]);
+
+        var options = {
+        title: 'Cycling Conditions',
+        titleTextStyle: {color: 'white'},
+        series: { 0:{ color: 'white'} },
+        lineWidth: 7,
+        curveType: 'function',
+        backgroundColor:{fill:'#72A0C1', stroke:'#F0F8FF'},
+        chartArea:{backgroundColor:'#5D8AA8'},
+        vAxis:{ maxValue: 100, minValue: 0, textStyle:{color:'white'}, gridlines:{color:'#7B9DB5'} },
+        hAxis:{ textStyle:{color:'white'} },
+       	legend:{position: 'none'},
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+       
+
+        chart.draw(data, options);
+      }
+    </script>";
+	return $graphOutput;
+}
+
 function unitChoice($units)
 {
 	// Returns variables for $endpoint and temp/speed terminology; assumes a valid unit choice.
@@ -121,13 +221,8 @@ function metascore($day, $units)
 		}
 		if($temperature < 0)
 		{
-			$score = $score - (3 * (-10 + $temperature)); 
+			$score = $score + (3 * (-10 + $temperature)); 
 		}
-	}
-	// Set a floor of zero
-	if($score < 0)
-	{
-		$score = 0;
 	}
 
 	// If $precipProb is high, or if the conditons ($icon) contain bad words :P, then lower the score
@@ -136,7 +231,19 @@ function metascore($day, $units)
 		// Than it's precipitating badly enough for a serious deduction (40% of what it would be otherwise)
 		$score = $score * 0.4;
 	}
+
 	$score = round($score);
+
+	// Set a floor and ceiling to keep the overall value constrained.
+	if($score > 100)
+	{
+		$score = 100;
+	}
+	if($score < 0)
+	{
+		$score = 0;
+	}
+
 	return (string)$score;
 }
 
@@ -161,16 +268,40 @@ function reportWeekly($week, $units)
 {
 	// Reports the contents of an associative array, $week, containing data about the following week's weather forecast.
 	// Assumes a properly formatted $week associative array.
+
+	// Table formatting flag: 1 means use a table, 0 means no.
+	$table = 1;
+
 	$weekdays = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
 	$unixDay = mktime();
 	$today = date('N', $unixDay); // Returns 1-7
 
 	print "<p><b>Weekly Summary</b></p>";
 
+	if($table == 1)
+	{
+		print "<table>";
+		print "<tr>";
+		// call chart function here.  Iterate over $week and build an array with metascore values
+		$metaArray = array();
+		array_push($metaArray, $today);	// First element will indicate the starting day for the chart.
+		for($i = 0; $i <= 6; $i++)
+		{
+			array_push($metaArray, metascore($week[$i], $units));
+		}
+		print makeGraph($metaArray);		
+		print "</tr>";
+		print "<tr>";
+	}
+
 	for($i = 0; $i <= 6; $i++)
 	{
 		if($today <= 6)
 		{
+			if($table == 1)
+			{
+				print "<td>";
+			}
 			print "<p>";
 			print "<i>" . $weekdays[$today] . "</i>:<br/>";
 			print $week[$i][0] . "<br/>";
@@ -178,6 +309,7 @@ function reportWeekly($week, $units)
 		else
 		{
 			// We've gone off the end off the array, so compensate.
+			print "<td>";
 			print "<p>";
 			print "<i>" . $weekdays[$today - 7] . "</i>:<br/>";
 			print $week[$i][0] . "<br/>";
@@ -190,7 +322,12 @@ function reportWeekly($week, $units)
 		print "Metascore: " . metascore($week[$i], $units) . "%<br/>";
 
 		print "</p>";
+		print "</td>";
 		$today++;
+	}
+	if($table ==1)
+	{
+		print "</tr>";
 	}
 }
 
@@ -297,25 +434,7 @@ for($i = 0; $i < 7; $i++)
 
 $output = "";
 
-$output .= "<html>
- <head>
-  	<title>The "
-  	. $cityName .
-
-  	" Bike Report</title>
- 	<meta charset='UTF-8'>
-	<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
-	<script type='text/javascript' src='http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js'></script>
-
-	<style type='text/css'>
-		#image{
-  			margin:100px 100px;
-		}
-	</style>
-
- </head>
- <body>
-";
+$output .= startUntilBody($cityName);
 
 $output .= "<p><b>Data:</b> " . $cityName . ", " . $state . ", " . $country . ", " . $lat . ", " . $lng .  ", " . $units . "</p>";
 $output .= "<p><b>Time: </b>" . time() . "</p>";
@@ -323,19 +442,16 @@ $output .= "<p><b>Present Conditions:</b> " . $currently . "</p>";
 $output .= "<p><b>Temperature: </b>" . round($temperature) . " " . $tempSuffix . "</p>";
 $output .= "<p><b>Wind Speed / Bearing:</b> " . round($windSpeed) . " " . $speedSuffix . " / " . $windBearing . " degrees (" . compass($windBearing) . ") / ";
 
-$output .= "<script>";
-$output .= "$(document).ready(function(){";
-$output .= "$('#windArrow').rotate(" . $windBearing . ");";
-$output .= "});";
-$output .= "</script>";
+$output .= rotateArrow($windBearing);
 
-$output .= "<img src='arrow.gif' id='windArrow'></p>";
+$output .= "<p><b>Metascore: </b>" . metascore($dailyWeather, $units) . "%</p>"; 
 
 $output .= "<p><b>Time Tomorrow: </b>" . (time() + 86400) . "</p>";
 $output .= "<p><b>24hr Forecast: </b>" . $nextDayForecast . "</p>";
 $output .= "<p><b>High / Low tomorrow: </b>" . round($nextDayTempMax) . " " . $tempSuffix . " / " . round($nextDayTempMin) . $tempSuffix . "</b>";
 
 $output .= "<p><b>Weekly Forecast: </b>" . $weeklyForecast . "</p>";
+$output .= "<div id='chart_div' style='width: 900px; height: 200px;''></div>";
 print $output;
 $output = "";
 

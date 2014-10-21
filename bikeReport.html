@@ -263,12 +263,14 @@ function relocate(url)
 function didYouMean(didYouMeanCities)
 {
     // Returns a single user-choosen city's data, given an array of cities.
+    validCityFlag = 0;
     didYouMeanOutput = "<p>Did you mean...?</p>";
     didYouMeanOutput += "<p>";
     for(i = 0; i < didYouMeanCities.length; i++)
     {
         if(typeof(didYouMeanCities[i][2]) != 'undefined')
         {
+            validCityFlag = 1;
             didYouMeanOutput += "<a href='bikeReport.php?cityName=" + didYouMeanCities[i][2];
             didYouMeanOutput += "&lat=" + didYouMeanCities[i][0];
             didYouMeanOutput += "&lng=" + didYouMeanCities[i][1];
@@ -293,7 +295,14 @@ function didYouMean(didYouMeanCities)
         }
     }
     didYouMeanOutput += "</p>";
-    report(didYouMeanOutput);
+    if(validCityFlag == 1)
+    {
+        report(didYouMeanOutput);
+    }
+    else
+    {
+        report("Sorry, no results found for that name");
+    }
 }
 </script>
 
