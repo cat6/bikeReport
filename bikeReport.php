@@ -30,6 +30,30 @@ $weatherAPIKey = $weatherAPIKey[0];
 	Functions
 */
 
+function bookmarkMe()
+{
+	$bookmarkMeOutput = "
+		<script>
+		// Credit: http://stackoverflow.com/questions/10033215/add-to-favorites-button
+    	$(function() {
+	        $('#bookmarkme').click(function() {
+	            if (window.sidebar && window.sidebar.addPanel) { // Mozilla Firefox Bookmark
+	                window.sidebar.addPanel(document.title,window.location.href,'');
+	            } else if(window.external && ('AddFavorite' in window.external)) { // IE Favorite
+	                window.external.AddFavorite(location.href,document.title); 
+	            } else if(window.opera && window.print) { // Opera Hotlist
+	                this.title=document.title;
+	                return true;
+	            } else { // webkit - safari/chrome
+	                alert('Press ' + (navigator.userAgent.toLowerCase().indexOf('mac') != - 1 ? 'Command/Cmd' : 'CTRL') + ' + D to bookmark this page.');
+	            }
+	        });
+    	});
+		</script>
+		<p><a id='bookmarkme' href='#'' rel='sidebar' title='bookmark this page'>Bookmark This Page</a></p>";
+	return $bookmarkMeOutput;
+}
+
 function startUntilBody($cityName)
 {
 	$startUntilBodyOutput = "<html>
@@ -48,7 +72,6 @@ function startUntilBody($cityName)
 	  			margin:100px 100px;
 			}
 		</style>
-
 	</head>
 	<body>
 	";
@@ -166,7 +189,7 @@ function convertSpeed($speed)
 function convertTemp($temperature)
 {
 	// Converts temperature from F to C
-	return ($temperature * (9/5)) + 32;
+	return ($temperature - 32) * (5/9);
 }
 
 function metascore($day, $units)
@@ -257,10 +280,10 @@ function clean($str)
 
 function compass($degrees)
 {
-	// Returns a string representing a compass direction, as based upon an input degree value, $degrees.
+	// Returns a string representing a compass direction, as based upon an input degree value, $degrees.  Assumes $degrees does not exceed 360.
 	$compass = array("N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW");
 	$compcount = round($degrees / 22.5);
-	$compdir = $compass[$compcount];
+	$compdir = $compass[$compcount - 1];
 	return $compdir;
 }
 
@@ -437,6 +460,9 @@ $output = "";
 $output .= startUntilBody($cityName);
 
 $output .= "<p><b>Data:</b> " . $cityName . ", " . $state . ", " . $country . ", " . $lat . ", " . $lng .  ", " . $units . "</p>";
+
+$output .= bookmarkMe();
+
 $output .= "<p><b>Time: </b>" . time() . "</p>";
 $output .= "<p><b>Present Conditions:</b> " . $currently . "</p>";
 $output .= "<p><b>Temperature: </b>" . round($temperature) . " " . $tempSuffix . "</p>";

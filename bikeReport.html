@@ -37,22 +37,14 @@
 <p id="userIP"></p>
 
 <script>
-// Get the User's IP Address
-$(document).ready(function () {
-    $.get('http://jsonip.com', function (res) {
-        tellIP(res.ip);
-    });
-});
+function tellIP(ip) {
+    var ipXML, ipURL, userLocation;
 
-function tellIP(ip)
-{
     ipXML = new XMLHttpRequest();
     ipURL = "http://freegeoip.net/json/" + ip;
 
-    ipXML.onreadystatechange=function() 
-    {
-        if (ipXML.readyState == 4 && ipXML.status == 200) 
-        {
+    ipXML.onreadystatechange = function () {
+        if(ipXML.readyState === 4 && ipXML.status === 200) {
             // Generates information about the user's location
             userLocation = parseIP(ipXML.responseText);
         }
@@ -61,25 +53,34 @@ function tellIP(ip)
     ipXML.send();
 }
 
-function ipReport(ipURL,frm)
-{
+// Get the User's IP Address
+$(document).ready(function () {
+    $.get('http://jsonip.com', function (res) {
+        tellIP(res.ip);
+    });
+});
+
+function ipReport(ipURL,frm) {
+    var units;
+
     units = frm.ipUnits.value;
     relocate(ipURL + "&units=" + units);
 }
 
-function parseIP(res)
-{
+function parseIP(res) {
     // Parse json object with user location data
+    var jsonArr, ip, ipCityName, ipCountry, ipLat, ipLng, ipLocality, units, ipOutput;
+
     jsonArr = JSON.parse(res);
     ip = jsonArr.ip;
-    cityName = jsonArr.city;
-    country = jsonArr.country_name;
-    lat = jsonArr.latitude;
-    lng = jsonArr.longitude;
-    locality = jsonArr.region_name;
-    units = "CA";   // NEED TO FIX SO ANY UNIT CAN BE CHOOSEN.
+    ipCityName = jsonArr.city;
+    ipCountry = jsonArr.country_name;
+    ipLat = jsonArr.latitude;
+    ipLng = jsonArr.longitude;
+    ipLocality = jsonArr.region_name;
+    units = "CA";  
 
-    ipOutput = "Based upon your IP address (" + ip + "), you appear to be in " + cityName + ", " + country + ".<br/>  Would you like to get the report for " + cityName + "?";
+    ipOutput = "Based upon your IP address (" + ip + "), you appear to be in " + ipCityName + ", " + ipCountry + ".<br/>  Would you like to get the report for " + ipCityName + "?";
 
     ipOutput += "<form>";
     ipOutput += "<select name='ipUnits'>";
@@ -88,11 +89,11 @@ function parseIP(res)
     ipOutput += "<option value='UK'>UK(km/C)</options>";
     ipOutput += "</select><br/>";
 
-    ipURL = "bikeReport.php?cityName=" + cityName;
-    ipURL += "&lat=" + lat;
-    ipURL += "&lng=" + lng;
-    ipURL += "&locality=" + locality;
-    ipURL += "&country=" + country;
+    ipURL = "bikeReport.php?cityName=" + ipCityName;
+    ipURL += "&lat=" + ipLat;
+    ipURL += "&lng=" + ipLng;
+    ipURL += "&locality=" + ipLocality;
+    ipURL += "&country=" + ipCountry;
 
     ipOutput += "<input type=button onClick='ipReport(ipURL,this.form)' value='Get Report'>";
     ipOutput += "</form>";
@@ -101,8 +102,9 @@ function parseIP(res)
     document.getElementById("userIP").innerHTML = ipOutput; 
 }
 
-function getCityData(frm)
-{
+function getCityData(frm) {
+    var majorCities, units, output, cityXML, cityURL, cityURL1, cityURL2, cityName, candidates, lat, lng, locality, country, i;
+
     // Default cities data: lat, lng, cityName, locality, country
     majorCities = [
         [43.653226, -79.3831843, "Toronto", "Ontario", "Canada"],
@@ -112,7 +114,7 @@ function getCityData(frm)
     units = frm.units.value;
     output = "";
 
-    if(frm.cityDropDown.value == "other" && frm.cityInput.value == "")
+    if(frm.cityDropDown.value === "other" && frm.cityInput.value === "")
     {
         window.alert("Please either select a city from the drop-down menu or enter a value for your city");
     }
@@ -158,24 +160,22 @@ function getCityData(frm)
             else
             {
                 // As a backup.
-                var cityName = frm.cityDropDown.value;
+                cityName = frm.cityDropDown.value;
             }
         }
         i = 0;
     }
 }
 
-function parseCity(response, cityName) 
-{
+function parseCity(response, cityName) {
     // Parse response data and glean location data.  Accept only results that are valid cities and not place-names similar to cityName
-    var jsonArr = JSON.parse(response);
-    var i;
-    var j;
-    var output = "";
-    var lat = "";
-    var lng = "";
-    var cityFlag = 0;
-    var cityCount = 0;
+    var jsonArr, i, j, output, lat, lng, cityFlag, cityCount, possibleCities, candidate;
+    jsonArr = JSON.parse(response);
+    output = "";
+    lat = "";
+    lng = "";
+    cityFlag = 0;
+    cityCount = 0;
 
     /* 
         Array for storing candiate cities for the user to select from:
@@ -185,7 +185,7 @@ function parseCity(response, cityName)
         [3]: city locality  (e.g. Ontario)
         [4]: Country        (e.g. Canada)
     */ 
-    var possibleCities = [];
+    possibleCities = [];
 
     for(i = 0; i < jsonArr.results.length; i++)
     {
@@ -249,20 +249,22 @@ function parseCity(response, cityName)
     return possibleCities;
 }
 
-function report(output)
-{
+function report(output) {
     // Actually write the output string to the document
     document.getElementById("report").innerHTML = output;    
 }
 
-function relocate(url)
-{
+function relocate(url) {
     window.location = url;
 }
 
-function didYouMean(didYouMeanCities)
-{
+function didYouMean(didYouMeanCities) {
     // Returns a single user-choosen city's data, given an array of cities.
+    var validCityFlag, didYouMeanOutput, i, units;
+
+    // ADJUST
+    units = "CA";
+
     validCityFlag = 0;
     didYouMeanOutput = "<p>Did you mean...?</p>";
     didYouMeanOutput += "<p>";
