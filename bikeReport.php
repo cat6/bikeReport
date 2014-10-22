@@ -49,12 +49,11 @@ function bookmarkMe()
 	            }
 	        });
     	});
-		</script>
-		<p><a id='bookmarkme' href='#'' rel='sidebar' title='bookmark this page'>Bookmark This Page</a></p>";
+		</script>";
 	return $bookmarkMeOutput;
 }
 
-function startUntilBody($cityName)
+function startUntilBody($cityName, $lat, $lng)
 {
 	$startUntilBodyOutput = "<html>
 	<head>
@@ -67,9 +66,98 @@ function startUntilBody($cityName)
 		<!-- Google line graph -->
 		<script type='text/javascript' src='https://www.google.com/jsapi'></script>
 
+		<link href='http://fonts.googleapis.com/css?family=Droid+Serif|Crimson+Text' rel='stylesheet' type='text/css'>
+
 		<style type='text/css'>
 			#image{
 	  			margin:100px 100px;
+			}
+			
+			html, body {
+   				padding: 0;
+     			margin: 0;
+			}
+
+			body {
+				background: #FAEBD7;
+				font-family: 'Droid Serif';
+			}
+
+			#container
+			{
+				margin: 0 30px;
+				background: 'red';
+			}
+
+			#header
+			{
+				color: #FAEBD7;
+				background: #5D8AA8;
+				padding: 20px;
+				font-family: 'Crimson Text', serif;
+				";
+
+	$startUntilBodyOutput .= "background-image: url('https://maps.googleapis.com/maps/api/staticmap?center=" . $lat . "," . $lng . "&zoom=11&size=600x600');";
+
+	$startUntilBodyOutput .= "
+				background-repeat: no-repeat;
+				background-attachment: fixed;
+				background-position: right top;
+			}
+
+			#header h1 { margin: 0; font-size: 250%;}
+
+			#navigation
+			{
+				float: right;
+				width: 100%;
+				background: #333;
+			}
+
+			#navigation ul
+			{
+				float: right;
+				margin: 0;
+				padding: 0;
+			}
+
+			#navigation ul li
+			{
+				list-style-type: none;
+				display: inline;
+			}
+
+			#navigation li a
+			{
+				display: block;
+				padding: 5px 10px;
+				color: #fff;
+				text-decoration: none;
+			}
+
+			#navigation li a:hover { background: #5D8AA8; }
+
+			#content
+			{
+				clear: left;
+				padding: 20px;
+				background: #72A0C1;
+			}
+
+			#content h2
+			{
+				color: #000;
+				font-size: 160%;
+				margin: 0 0 .5em;
+			}
+
+			#footer
+			{
+				background: #333;
+				color: #fff;
+				text-align: right;
+				padding: 20px;
+				height: 1%;
 			}
 		</style>
 	</head>
@@ -86,7 +174,7 @@ function rotateArrow($windBearing)
 	$rotateArrowOutput .= "});";
 	$rotateArrowOutput .= "</script>";
 
-	$rotateArrowOutput .= "<img src='arrow.gif' id='windArrow'></p>";
+	$rotateArrowOutput .= "<img src='arrow.gif' id='windArrow'><br/>";
 
 	return $rotateArrowOutput;
 }
@@ -133,20 +221,20 @@ function makeGraph($points)
 
         var options = {
         title: 'Cycling Conditions',
-        titleTextStyle: {color: 'white'},
-        series: { 0:{ color: 'white'} },
+        fontName: 'Crimson+Text',
+        titleTextStyle: {color: '#FAEBD7'},
+        series: { 0:{ color: '#FAEBD7'} },
         lineWidth: 7,
         curveType: 'function',
         backgroundColor:{fill:'#72A0C1', stroke:'#F0F8FF'},
         chartArea:{backgroundColor:'#5D8AA8'},
-        vAxis:{ maxValue: 100, minValue: 0, textStyle:{color:'white'}, gridlines:{color:'#7B9DB5'} },
-        hAxis:{ textStyle:{color:'white'} },
+        vAxis:{ maxValue: 100, minValue: 0, textStyle:{color:'#FAEBD7'}, gridlines:{color:'#7B9DB5'} },
+        hAxis:{ maxValue: 100, minValue: 0, textStyle:{color:'#FAEBD7'} },
        	legend:{position: 'none'},
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
        
-
         chart.draw(data, options);
       }
     </script>";
@@ -282,8 +370,8 @@ function compass($degrees)
 {
 	// Returns a string representing a compass direction, as based upon an input degree value, $degrees.  Assumes $degrees does not exceed 360.
 	$compass = array("N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW");
-	$compcount = round($degrees / 22.5);
-	$compdir = $compass[$compcount - 1];
+	$compCount = round($degrees / 22.5);
+	$compdir = $compass[$compCount];
 	return $compdir;
 }
 
@@ -292,6 +380,8 @@ function reportWeekly($week, $units)
 	// Reports the contents of an associative array, $week, containing data about the following week's weather forecast.
 	// Assumes a properly formatted $week associative array.
 
+	$reportOutput;
+
 	// Table formatting flag: 1 means use a table, 0 means no.
 	$table = 1;
 
@@ -299,22 +389,22 @@ function reportWeekly($week, $units)
 	$unixDay = mktime();
 	$today = date('N', $unixDay); // Returns 1-7
 
-	print "<p><b>Weekly Summary</b></p>";
+	$reportOutput .= "<p><b>Weekly Summary</b></p>\n";
 
 	if($table == 1)
 	{
-		print "<table>";
-		print "<tr>";
-		// call chart function here.  Iterate over $week and build an array with metascore values
+		$reportOutput .= "<table>\n";
+		$reportOutput .= "<tr>\n";
+
 		$metaArray = array();
 		array_push($metaArray, $today);	// First element will indicate the starting day for the chart.
 		for($i = 0; $i <= 6; $i++)
 		{
 			array_push($metaArray, metascore($week[$i], $units));
 		}
-		print makeGraph($metaArray);		
-		print "</tr>";
-		print "<tr>";
+		$reportOutput .= makeGraph($metaArray);		
+		$reportOutput .= "</tr>\n";
+		$reportOutput .= "<tr>";
 	}
 
 	for($i = 0; $i <= 6; $i++)
@@ -323,35 +413,39 @@ function reportWeekly($week, $units)
 		{
 			if($table == 1)
 			{
-				print "<td>";
+				$reportOutput .= "<td>";
 			}
-			print "<p>";
-			print "<i>" . $weekdays[$today] . "</i>:<br/>";
-			print $week[$i][0] . "<br/>";
-		}
+			$reportOutput .= "<p>";
+			$reportOutput .= "<i>" . $weekdays[$today] . "</i>:<br/>\n";
+			$reportOutput .= $week[$i][0] . "<br/>\n";
+			}
 		else
 		{
 			// We've gone off the end off the array, so compensate.
-			print "<td>";
-			print "<p>";
-			print "<i>" . $weekdays[$today - 7] . "</i>:<br/>";
-			print $week[$i][0] . "<br/>";
+			$reportOutput .= "<td>";
+			$reportOutput .= "<p>";
+			$reportOutput .= "<i>" . $weekdays[$today - 7] . "</i>:<br/>";
+			$reportOutput .= $week[$i][0] . "<br/>";
 		}
-		print "Wind speed/bearing: " . $week[$i][1] . " / " . $week[$i][2] . "<br/>";
-		print "Precipitation: " . $week[$i][3][0] . " / " . $week[$i][3][1] . " / " . $week[$i][3][2] . "<br/>";
-		print "Temperature: " . $week[$i][4][0] . " / " . $week[$i][4][1] . " / " . $week[$i][4][2] . " / " . $week[$i][4][3] . "<br/>";
-		print "Icon: " . $week[$i][5] . "<br/>";
+		$reportOutput .= "Wind speed/bearing: " . $week[$i][1] . " / " . $week[$i][2] . "<br/>\n";
+		$reportOutput .= "Precipitation: " . $week[$i][3][0] . " / " . $week[$i][3][1] . " / " . $week[$i][3][2] . "<br/>\n";
+		$reportOutput .= "Temperature: " . $week[$i][4][0] . " / " . $week[$i][4][1] . " / " . $week[$i][4][2] . " / " . $week[$i][4][3] . "<br/>\n";
+		$reportOutput .= "Icon: " . $week[$i][5] . "<br/>\n";
 
-		print "Metascore: " . metascore($week[$i], $units) . "%<br/>";
+		$reportOutput .= "Metascore: " . metascore($week[$i], $units) . "%<br/>\n";
 
-		print "</p>";
-		print "</td>";
+		$reportOutput .= "</p>\n";
+		$reportOutput .= "</td>\n";
 		$today++;
 	}
 	if($table ==1)
 	{
-		print "</tr>";
+		$reportOutput .= "</tr>\n";
 	}
+
+	$reportOutput .= "</table>";
+
+	return $reportOutput;
 }
 
 /*
@@ -457,33 +551,59 @@ for($i = 0; $i < 7; $i++)
 
 $output = "";
 
-$output .= startUntilBody($cityName);
+$output .= startUntilBody($cityName, $lat, $lng);
 
-$output .= "<p><b>Data:</b> " . $cityName . ", " . $state . ", " . $country . ", " . $lat . ", " . $lng .  ", " . $units . "</p>";
+$output .= "<div id='container'>\n";
+	$output .= bookmarkMe();
 
-$output .= bookmarkMe();
+	// Header
+	$output .= "<div id='header'>\n";
+	$output .= "<h1>Bike Report: " . $cityName . "</h1>";
+	$output .= "</div>\n";
+	$output .= "
+	<div id='navigation'>
+		<ul>
+			<li>";
+	$output .= "<a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a></a></li></ul></div>";
 
-$output .= "<p><b>Time: </b>" . time() . "</p>";
-$output .= "<p><b>Present Conditions:</b> " . $currently . "</p>";
-$output .= "<p><b>Temperature: </b>" . round($temperature) . " " . $tempSuffix . "</p>";
-$output .= "<p><b>Wind Speed / Bearing:</b> " . round($windSpeed) . " " . $speedSuffix . " / " . $windBearing . " degrees (" . compass($windBearing) . ") / ";
+	// Content
+	$output .= "<div id='content'>\n";
 
-$output .= rotateArrow($windBearing);
+		$output .= "<p><b>Data:</b> " . $cityName . ", " . $state . ", " . $country . ", " . $lat . ", " . $lng .  ", " . $units . "<br/>\n";
 
-$output .= "<p><b>Metascore: </b>" . metascore($dailyWeather, $units) . "%</p>"; 
+		$output .= "<b>Time: </b>" . time() . "<br/>\n";
+		$output .= "<b>Present Conditions:</b> " . $currently . "<br/>\n";
+		$output .= "<b>Temperature: </b>" . round($temperature) . " " . $tempSuffix . "<br/>\n";
+		$output .= "<b>Wind Speed / Bearing:</b> " . round($windSpeed) . " " . $speedSuffix . " / " . $windBearing . " degrees (" . compass($windBearing) . ") / ";
 
-$output .= "<p><b>Time Tomorrow: </b>" . (time() + 86400) . "</p>";
-$output .= "<p><b>24hr Forecast: </b>" . $nextDayForecast . "</p>";
-$output .= "<p><b>High / Low tomorrow: </b>" . round($nextDayTempMax) . " " . $tempSuffix . " / " . round($nextDayTempMin) . $tempSuffix . "</b>";
+		$output .= rotateArrow($windBearing);
 
-$output .= "<p><b>Weekly Forecast: </b>" . $weeklyForecast . "</p>";
-$output .= "<div id='chart_div' style='width: 900px; height: 200px;''></div>";
-print $output;
-$output = "";
+		$output .= "<b>Metascore: </b>" . metascore($dailyWeather, $units) . "%<br/>\n"; 
 
-// Report the week's weather
-reportWeekly($weeklyWeather, $units);
+		$output .= "<b>Time Tomorrow: </b>" . (time() + 86400) . "<br/>\n";
+		$output .= "<b>24hr Forecast: </b>" . $nextDayForecast . "<br/>\n";
+		$output .= "<b>High / Low tomorrow: </b>" . round($nextDayTempMax) . " " . $tempSuffix . " / " . round($nextDayTempMin) . $tempSuffix . "<br/>\n";
 
-$output .= "</body></html>";
+		$output .= "<b>Weekly Forecast: </b>" . $weeklyForecast . "<br/>\n";
+		$output .= "<div id='chart_div' style='width: 900px; height: 200px; margin-left:auto; margin-right:auto;'></div>\n";
+
+		print $output;
+
+		$output = "";
+
+		// Report the week's weather
+		$output .= reportWeekly($weeklyWeather, $units);
+		print $output;
+		$output = "";
+
+	$output .= "</div>\n";
+	$output .= "<div id='footer'>\n";
+	$output .= "Copyright 2014";
+	$output .= "</div>\n";
+
+$output .= "</div>\n";
+
+$output .= "</body>\n";
+$output .= "</html>";
 print $output;
 ?>
