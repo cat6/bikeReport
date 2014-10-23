@@ -2,311 +2,489 @@
 <html>
 
 <head>
-    <title>City Locator</title>
+    <title>Bike Report</title>
     <meta charset="UTF-8">
     <script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+    <link href='http://fonts.googleapis.com/css?family=Droid+Serif%7CCrimson+Text' rel='stylesheet' type='text/css'>
+
+    <style type='text/css'>
+                #image{
+                    margin:100px 100px;
+                }
+                
+                html, body {
+                    padding: 0;
+                    margin: 0;
+                }
+
+                body {
+                    background: #FAEBD7;
+                    font-family: 'Droid Serif';
+                }
+
+                #container
+                {
+                    margin-left: auto;
+                    margin-right: auto;
+                    height: auto;
+                    width: auto;
+                }
+
+                #header
+                {
+                    color: #FAEBD7;
+                    background: #5D8AA8;
+                    padding: 20px;
+                    font-family: 'Crimson Text', serif;
+                    /* Stroking and shadow makes the title visible when it overlaps the map in the header */
+                    webkit-text-stroke: 1px black;
+                    text-shadow:
+                        3px 3px 0 #000,
+                        -1px -1px 0 #000,  
+                        1px -1px 0 #000,
+                        -1px 1px 0 #000,
+                        1px 1px 0 #000;
+                    background-repeat: no-repeat;
+                background-attachment: fixed;
+                background-position: right top;
+                }
+
+                #header h1 { margin: 0; font-size: 250%;}
+
+                #navigation
+                {
+                    float: right;
+                    width: 100%;
+                    background: #333;
+                }
+
+                #navigation ul
+                {
+                    float: right;
+                    margin: 0;
+                    padding: 0;
+                }
+
+                #navigation ul li
+                {
+                    list-style-type: none;
+                    display: inline;
+                }
+
+                #navigation li a
+                {
+                    display: block;
+                    padding: 5px 10px;
+                    color: #fff;
+                    text-decoration: none;
+                }
+
+                #navigation li a:hover { background: #5D8AA8; }
+
+                #content
+                {
+                    background: #72A0C1;
+
+                    overflow: hidden;
+                    min-height: 700px;
+                    padding-left: 10px;
+                    padding-right: 10px;
+                }
+
+                #content h2
+                {
+                    color: #000;
+                    font-size: 160%;
+                    margin: 0 0 .5em;
+                }
+
+                #footer
+                {
+                    background: #333;
+                    color: #fff;
+                    text-align: right;
+                    padding: 20px;
+                    height: 1%;
+                }
+
+                #left{
+                    width:35%;
+                    float:left;
+                }
+
+                #right{
+                    width:55%;
+                    float:right;
+                }
+
+                #below{
+                }
+                
+                table
+                { 
+                    table-layout:fixed;
+                    width: 100%;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+                
+                td, th {
+                    vertical-align:top;
+                }
+                tr {
+                    align: center;
+                }
+
+                #bigCompass {
+                    text-align: center;
+                    vertical-align: middle;
+                    background: rgba(255, 255, 255, .2);                
+                }
+
+                #bigMetascore {
+                    text-align: center;
+                    vertical-align: middle;
+                    background: rgba(255, 255, 255, .5);
+                }
+
+                #compassTitle {
+                    text-align: top;
+                    color: 'red';
+                }
+
+                #formBox {
+                    width: 400px;
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    margin-top: -50px;
+                    margin-left: -100px;  
+                }
+            </style>
 </head>
 
 <body>
 
-<h3>City Weather Report (Beta)</h3>
+<div id='container'>
 
-<form>
-    City:
-    <select name="cityDropDown">
-        <option value="toronto">Toronto</option>
-        <option value="new york">New York</option>
-        <option value="portland">Portland, OR</option>
-        <option value="other">(other)</option>
-    </select>
-    <br/><br/>
-    Units
-    <select name="units">
-        <option value="CA">Canadian(km/C)</option>
-        <option value="US">USA(mi/F)</options>
-        <option value="UK">UK(mi/C)</options>
-    </select>
-    <br/><br/>
-    <input type=""  City Name: <input type="text" name="cityInput" id="cityInput"><br/>
-    <br/>
-    <button type="button" id="checkButton" onclick="getCityData(this.form)">Check</button>
-</form>
+<div id='header'>
+<h1>Bike Report (Beta)</h1>
+</div>
+<div id='navigation'></div>
 
-<div id="report"></div>
+<div id='content'>
 
-<p id="userIP"></p>
+    <div id='formBox'>
 
-<script>
-function tellIP(ip) {
-    var ipXML, ipURL, userLocation;
+    <form>
+        <label for='cityDropDown'>City: </label>
+        <select name="cityDropDown" id="cityDropDown">
+            <option value="toronto">Toronto</option>
+            <option value="new york">New York</option>
+            <option value="portland">Portland, OR</option>
+            <option value="other">(other)</option>
+        </select>
+        <br/><br/>
+        <label for='cityInput'>Search: </label><input type="text" size="10" name="cityInput" id="cityInput"><br/>
+        <br/>
+         <label for='units'>Units: </label>
+        <select name="units" id="units">
+            <option value="CA">Canadian(km/C)</option>
+            <option value="US">USA(mi/F)</option>
+            <option value="UK">UK(mi/C)</option>
+        </select>
+        <br/><br/>
 
-    ipXML = new XMLHttpRequest();
-    ipURL = "http://freegeoip.net/json/" + ip;
+        <button type="button" id="checkButton" onclick="getCityData(this.form)">Check</button>
+    </form>
 
-    ipXML.onreadystatechange = function () {
-        if(ipXML.readyState === 4 && ipXML.status === 200) {
-            // Generates information about the user's location
-            userLocation = parseIP(ipXML.responseText);
+    <div id="report"></div>
+
+    <p id="userIP"></p>
+
+    <script>
+
+    function tellIP(ip) {
+        var ipXML, ipURL, userLocation;
+
+        ipXML = new XMLHttpRequest();
+        ipURL = "http://freegeoip.net/json/" + ip;
+
+        ipXML.onreadystatechange = function () {
+            if(ipXML.readyState === 4 && ipXML.status === 200) {
+                // Generates information about the user's location
+                userLocation = parseIP(ipXML.responseText);
+            }
         }
+        ipXML.open("GET", ipURL, true);
+        ipXML.send();
     }
-    ipXML.open("GET", ipURL, true);
-    ipXML.send();
-}
 
-// Get the User's IP Address
-$(document).ready(function () {
-    $.get('http://jsonip.com', function (res) {
-        tellIP(res.ip);
+    // Get the User's IP Address
+    $(document).ready(function () {
+        $.get('http://jsonip.com', function (res) {
+            tellIP(res.ip);
+        });
     });
-});
 
-function ipReport(ipURL,frm) {
-    var units;
+    function ipReport(ipURL,frm) {
+        var units;
 
-    units = frm.ipUnits.value;
-    relocate(ipURL + "&units=" + units);
-}
-
-function parseIP(res) {
-    // Parse json object with user location data
-    var jsonArr, ip, ipCityName, ipCountry, ipLat, ipLng, ipLocality, units, ipOutput;
-
-    jsonArr = JSON.parse(res);
-    ip = jsonArr.ip;
-    ipCityName = jsonArr.city;
-    ipCountry = jsonArr.country_name;
-    ipLat = jsonArr.latitude;
-    ipLng = jsonArr.longitude;
-    ipLocality = jsonArr.region_name;
-    units = "CA";  
-
-    ipOutput = "Based upon your IP address (" + ip + "), you appear to be in " + ipCityName + ", " + ipCountry + ".<br/>  Would you like to get the report for " + ipCityName + "?";
-
-    ipOutput += "<form>";
-    ipOutput += "<select name='ipUnits'>";
-    ipOutput += "<option value='CA'>Canadian(km/C)</option>";
-    ipOutput += "<option value='US'>USA(mi/F)</options>";
-    ipOutput += "<option value='UK'>UK(km/C)</options>";
-    ipOutput += "</select><br/>";
-
-    ipURL = "bikeReport.php?cityName=" + ipCityName;
-    ipURL += "&lat=" + ipLat;
-    ipURL += "&lng=" + ipLng;
-    ipURL += "&locality=" + ipLocality;
-    ipURL += "&country=" + ipCountry;
-
-    ipOutput += "<input type=button onClick='ipReport(ipURL,this.form)' value='Get Report'>";
-    ipOutput += "</form>";
-
-    // Prompt the user to use IP geolocation to generate a report
-    document.getElementById("userIP").innerHTML = ipOutput; 
-}
-
-function getCityData(frm) {
-    var majorCities, units, output, cityXML, cityURL, cityURL1, cityURL2, cityName, candidates, lat, lng, locality, country, i;
-
-    // Default cities data: lat, lng, cityName, locality, country
-    majorCities = [
-        [43.653226, -79.3831843, "Toronto", "Ontario", "Canada"],
-        [40.7127837, -74.0059413, "New York", "New York", "United States"],
-        [45.5234515, -122.6762071, "Portland", "Oregon", "United States"],
-    ];
-    units = frm.units.value;
-    output = "";
-
-    if(frm.cityDropDown.value === "other" && frm.cityInput.value === "")
-    {
-        window.alert("Please either select a city from the drop-down menu or enter a value for your city");
+        units = frm.ipUnits.value;
+        relocate(ipURL + "&units=" + units);
     }
 
-    // Parse form data
-    if(frm.cityDropDown.value == "other")
-    {
-        // Perform Google geolocation
-        cityXML = new XMLHttpRequest();
-        cityURL1 = "http://maps.googleapis.com/maps/api/geocode/json?address=";
-        cityName = frm.cityInput.value;
-        cityURL2 = "&sensor=false";
-        cityURL = cityURL1 + cityName + cityURL2;
+    function parseIP(res) {
+        // Parse json object with user location data
+        var jsonArr, ip, ipCityName, ipCountry, ipLat, ipLng, ipLocality, units, ipOutput;
 
-        frm.cityInput.value = "";
+        jsonArr = JSON.parse(res);
+        ip = jsonArr.ip;
+        ipCityName = jsonArr.city;
+        ipCountry = jsonArr.country_name;
+        ipLat = jsonArr.latitude;
+        ipLng = jsonArr.longitude;
+        ipLocality = jsonArr.region_name;
+        units = "CA";  
 
-        cityXML.onreadystatechange=function() 
+        ipOutput = "Based upon your IP address (" + ip + "), you appear to be in " + ipCityName + ", " + ipCountry + ".<br/>  Would you like to get the report for " + ipCityName + "?<br/><br/>";
+
+        ipOutput += "<form>";
+        ipOutput += "<select name='ipUnits'>";
+        ipOutput += "<option value='CA'>Canadian(km/C)</option>";
+        ipOutput += "<option value='US'>USA(mi/F)</options>";
+        ipOutput += "<option value='UK'>UK(km/C)</options>";
+        ipOutput += "</select><br/><br/>";
+
+        ipURL = "bikeReport.php?cityName=" + ipCityName;
+        ipURL += "&lat=" + ipLat;
+        ipURL += "&lng=" + ipLng;
+        ipURL += "&locality=" + ipLocality;
+        ipURL += "&country=" + ipCountry;
+
+        ipOutput += "<input type=button onClick='ipReport(ipURL,this.form)' value='Get Report'>";
+        ipOutput += "</form>";
+
+        // Prompt the user to use IP geolocation to generate a report
+        document.getElementById("userIP").innerHTML = ipOutput; 
+    }
+
+    function getCityData(frm) {
+        var majorCities, units, output, cityXML, cityURL, cityURL1, cityURL2, cityName, candidates, lat, lng, locality, country, i;
+
+        // Default cities data: lat, lng, cityName, locality, country
+        majorCities = [
+            [43.653226, -79.3831843, "Toronto", "Ontario", "Canada"],
+            [40.7127837, -74.0059413, "New York", "New York", "United States"],
+            [45.5234515, -122.6762071, "Portland", "Oregon", "United States"],
+        ];
+        units = frm.units.value;
+        output = "";
+
+        if(frm.cityDropDown.value === "other" && frm.cityInput.value === "")
         {
-            if (cityXML.readyState == 4 && cityXML.status == 200) 
-            {
-                // Generates a list of cities with the name the user input
-                candidates = parseCity(cityXML.responseText, cityName);
-            }
+            window.alert("Please either select a city from the drop-down menu or enter a value for your city");
         }
-        cityXML.open("GET", cityURL, true);
-        cityXML.send();
-    }
-    else
-    {
-        // foreach over an array of predefined city data; if found, populate the results and move on; else, use the city name in a search-mode result
-        for(i = 0; i < majorCities.length; i++)
+
+        // Parse form data
+        if(frm.cityDropDown.value == "other")
         {
-            if(frm.cityDropDown.value.toLowerCase() == majorCities[i][2].toLowerCase())
+            // Perform Google geolocation
+            cityXML = new XMLHttpRequest();
+            cityURL1 = "http://maps.googleapis.com/maps/api/geocode/json?address=";
+            cityName = frm.cityInput.value;
+            cityURL2 = "&sensor=false";
+            cityURL = cityURL1 + cityName + cityURL2;
+
+            frm.cityInput.value = "";
+
+            cityXML.onreadystatechange=function() 
             {
-                lat = majorCities[i][0];
-                lng = majorCities[i][1];
-                cityName = majorCities[i][2];
-                locality = majorCities[i][3];
-                country = majorCities[i][4];
-                
-                relocate("bikeReport.php?cityName=" + cityName + "&lat=" + lat + "&lng=" + lng + "&locality=" + locality + "&country=" + country + "&units=" + units);
-            }
-            else
-            {
-                // As a backup.
-                cityName = frm.cityDropDown.value;
-            }
-        }
-        i = 0;
-    }
-}
-
-function parseCity(response, cityName) {
-    // Parse response data and glean location data.  Accept only results that are valid cities and not place-names similar to cityName
-    var jsonArr, i, j, output, lat, lng, cityFlag, cityCount, possibleCities, candidate;
-    jsonArr = JSON.parse(response);
-    output = "";
-    lat = "";
-    lng = "";
-    cityFlag = 0;
-    cityCount = 0;
-
-    /* 
-        Array for storing candiate cities for the user to select from:
-        [0]: latitude
-        [1]: longitude
-        [2]: city name      (e.g. Toronto)
-        [3]: city locality  (e.g. Ontario)
-        [4]: Country        (e.g. Canada)
-    */ 
-    possibleCities = [];
-
-    for(i = 0; i < jsonArr.results.length; i++)
-    {
-        // possibleCities.push(candidate);
-        candidate = [];
-        candidate[0] = jsonArr.results[i].geometry.location.lat;
-        candidate[1] = jsonArr.results[i].geometry.location.lng;
-
-        output += "<table>";
-        for(j = 0; j < jsonArr.results[i].address_components.length; j++)
-        {
-            if(jsonArr.results[i].address_components[j].types[0] == "locality")
-            {
-                // Not all localities are proper cities.  Some are "routes", etc..  Filter these out.
-                if(jsonArr.results[i].address_components[j].long_name.toLowerCase() == cityName.toLowerCase())
+                if (cityXML.readyState == 4 && cityXML.status == 200) 
                 {
-                    candidate[2] = jsonArr.results[i].address_components[j].long_name;
-                    output += "<td>";
-                    output += "<tr><td><b>City: </b></td><td>" + candidate[2] + "</td></tr>";
-                    cityFlag = 1;
+                    // Generates a list of cities with the name the user input
+                    candidates = parseCity(cityXML.responseText, cityName);
                 }
-            }  
-            if(jsonArr.results[i].address_components[j].types[0] == "country" && cityFlag == 1)
-            {
-                candidate[4] = jsonArr.results[i].address_components[j].long_name;
-                output += "<tr><td><b>Country: </b></td><td>" + candidate[4] + "</td></tr>";
             }
-            if(jsonArr.results[i].address_components[j].types[0] == "administrative_area_level_1" && cityFlag == 1)
-            {
-                candidate[3] = jsonArr.results[i].address_components[2].long_name;
-                output += "<tr><td><b>State/Province/Locality:</b></td><td> " + candidate[3] + "</td></tr>";
-            }
-        }
-        j = 0;
-
-        if(cityFlag == 1)
-        {
-            output += "<tr><td><b>Co-ordinates: </b></tr><br/>" + "<td><b>latitude</b> " + candidate[0] + " <b>by longitude</b> " + candidate[1] + "</td></tr><br/><br/>";
-
-            output += "</table>";
-            cityCount++;
+            cityXML.open("GET", cityURL, true);
+            cityXML.send();
         }
         else
         {
-            output += "</table>";
+            // foreach over an array of predefined city data; if found, populate the results and move on; else, use the city name in a search-mode result
+            for(i = 0; i < majorCities.length; i++)
+            {
+                if(frm.cityDropDown.value.toLowerCase() == majorCities[i][2].toLowerCase())
+                {
+                    lat = majorCities[i][0];
+                    lng = majorCities[i][1];
+                    cityName = majorCities[i][2];
+                    locality = majorCities[i][3];
+                    country = majorCities[i][4];
+                    
+                    relocate("bikeReport.php?cityName=" + cityName + "&lat=" + lat + "&lng=" + lng + "&locality=" + locality + "&country=" + country + "&units=" + units);
+                }
+                else
+                {
+                    // As a backup.
+                    cityName = frm.cityDropDown.value;
+                }
+            }
+            i = 0;
         }
+    }
 
-        if( (typeof(candidate[0]) != 'undefined') || (typeof(candidate[1]) != 'undefined') || ((typeof candidate[2]) != 'undefined') || ((typeof candidate[3]) != 'undefined') || ((typeof candidate[4]) != 'undefined') )
-        {
-            possibleCities.push(candidate);
-        }
+    function parseCity(response, cityName) {
+        // Parse response data and glean location data.  Accept only results that are valid cities and not place-names similar to cityName
+        var jsonArr, i, j, output, lat, lng, cityFlag, cityCount, possibleCities, candidate;
+        jsonArr = JSON.parse(response);
+        output = "";
+        lat = "";
+        lng = "";
         cityFlag = 0;
-    }
-    output += "<br/><b>Number of cities with this name found:</b> " + cityCount + "<br/>";
+        cityCount = 0;
 
-    // TESTING
-    //report(output);
+        /* 
+            Array for storing candiate cities for the user to select from:
+            [0]: latitude
+            [1]: longitude
+            [2]: city name      (e.g. Toronto)
+            [3]: city locality  (e.g. Ontario)
+            [4]: Country        (e.g. Canada)
+        */ 
+        possibleCities = [];
 
-    didYouMean(possibleCities);
-
-    return possibleCities;
-}
-
-function report(output) {
-    // Actually write the output string to the document
-    document.getElementById("report").innerHTML = output;    
-}
-
-function relocate(url) {
-    window.location = url;
-}
-
-function didYouMean(didYouMeanCities) {
-    // Returns a single user-choosen city's data, given an array of cities.
-    var validCityFlag, didYouMeanOutput, i, units;
-
-    // ADJUST
-    units = "CA";
-
-    validCityFlag = 0;
-    didYouMeanOutput = "<p>Did you mean...?</p>";
-    didYouMeanOutput += "<p>";
-    for(i = 0; i < didYouMeanCities.length; i++)
-    {
-        if(typeof(didYouMeanCities[i][2]) != 'undefined')
+        for(i = 0; i < jsonArr.results.length; i++)
         {
-            validCityFlag = 1;
-            didYouMeanOutput += "<a href='bikeReport.php?cityName=" + didYouMeanCities[i][2];
-            didYouMeanOutput += "&lat=" + didYouMeanCities[i][0];
-            didYouMeanOutput += "&lng=" + didYouMeanCities[i][1];
-            didYouMeanOutput += "&locality=" + didYouMeanCities[i][3];
-            didYouMeanOutput += "&country=" + didYouMeanCities[i][4];
-            didYouMeanOutput += "&units=" + units + "'>";
+            // possibleCities.push(candidate);
+            candidate = [];
+            candidate[0] = jsonArr.results[i].geometry.location.lat;
+            candidate[1] = jsonArr.results[i].geometry.location.lng;
 
-            if(didYouMeanCities[i][2])
+            output += "<table>";
+            for(j = 0; j < jsonArr.results[i].address_components.length; j++)
             {
-                didYouMeanOutput += didYouMeanCities[i][2] + ", ";
+                if(jsonArr.results[i].address_components[j].types[0] == "locality")
+                {
+                    // Not all localities are proper cities.  Some are "routes", etc..  Filter these out.
+                    if(jsonArr.results[i].address_components[j].long_name.toLowerCase() == cityName.toLowerCase())
+                    {
+                        candidate[2] = jsonArr.results[i].address_components[j].long_name;
+                        output += "<td>";
+                        output += "<tr><td><b>City: </b></td><td>" + candidate[2] + "</td></tr>";
+                        cityFlag = 1;
+                    }
+                }  
+                if(jsonArr.results[i].address_components[j].types[0] == "country" && cityFlag == 1)
+                {
+                    candidate[4] = jsonArr.results[i].address_components[j].long_name;
+                    output += "<tr><td><b>Country: </b></td><td>" + candidate[4] + "</td></tr>";
+                }
+                if(jsonArr.results[i].address_components[j].types[0] == "administrative_area_level_1" && cityFlag == 1)
+                {
+                    candidate[3] = jsonArr.results[i].address_components[2].long_name;
+                    output += "<tr><td><b>State/Province/Locality:</b></td><td> " + candidate[3] + "</td></tr>";
+                }
             }
-            if(didYouMeanCities[i][3])
+            j = 0;
+
+            if(cityFlag == 1)
             {
-                didYouMeanOutput += didYouMeanCities[i][3] + ", ";
+                output += "<tr><td><b>Co-ordinates: </b></tr><br/>" + "<td><b>latitude</b> " + candidate[0] + " <b>by longitude</b> " + candidate[1] + "</td></tr><br/><br/>";
+
+                output += "</table>";
+                cityCount++;
             }
-            if(didYouMeanCities[i][4])
+            else
             {
-                didYouMeanOutput += didYouMeanCities[i][4];
+                output += "</table>";
             }
 
-            didYouMeanOutput += "</a><br/>"; 
+            if( (typeof(candidate[0]) != 'undefined') || (typeof(candidate[1]) != 'undefined') || ((typeof candidate[2]) != 'undefined') || ((typeof candidate[3]) != 'undefined') || ((typeof candidate[4]) != 'undefined') )
+            {
+                possibleCities.push(candidate);
+            }
+            cityFlag = 0;
+        }
+        output += "<br/><b>Number of cities with this name found:</b> " + cityCount + "<br/>";
+
+        // TESTING
+        //report(output);
+
+        didYouMean(possibleCities);
+
+        return possibleCities;
+    }
+
+    function report(output) {
+        // Actually write the output string to the document
+        document.getElementById("report").innerHTML = output;    
+    }
+
+    function relocate(url) {
+        window.location = url;
+    }
+
+    function didYouMean(didYouMeanCities) {
+        // Returns a single user-choosen city's data, given an array of cities.
+        var validCityFlag, didYouMeanOutput, i, units;
+
+        // ADJUST
+        units = "CA";
+
+        validCityFlag = 0;
+        didYouMeanOutput = "<p>Did you mean...?</p>";
+        didYouMeanOutput += "<p>";
+        for(i = 0; i < didYouMeanCities.length; i++)
+        {
+            if(typeof(didYouMeanCities[i][2]) != 'undefined')
+            {
+                validCityFlag = 1;
+                didYouMeanOutput += "<a href='bikeReport.php?cityName=" + didYouMeanCities[i][2];
+                didYouMeanOutput += "&lat=" + didYouMeanCities[i][0];
+                didYouMeanOutput += "&lng=" + didYouMeanCities[i][1];
+                didYouMeanOutput += "&locality=" + didYouMeanCities[i][3];
+                didYouMeanOutput += "&country=" + didYouMeanCities[i][4];
+                didYouMeanOutput += "&units=" + units + "'>";
+
+                if(didYouMeanCities[i][2])
+                {
+                    didYouMeanOutput += didYouMeanCities[i][2] + ", ";
+                }
+                if(didYouMeanCities[i][3])
+                {
+                    didYouMeanOutput += didYouMeanCities[i][3] + ", ";
+                }
+                if(didYouMeanCities[i][4])
+                {
+                    didYouMeanOutput += didYouMeanCities[i][4];
+                }
+
+                didYouMeanOutput += "</a><br/>"; 
+            }
+        }
+        didYouMeanOutput += "</p>";
+        if(validCityFlag == 1)
+        {
+            report(didYouMeanOutput);
+        }
+        else
+        {
+            report("Sorry, no results found for that name");
         }
     }
-    didYouMeanOutput += "</p>";
-    if(validCityFlag == 1)
-    {
-        report(didYouMeanOutput);
-    }
-    else
-    {
-        report("Sorry, no results found for that name");
-    }
-}
-</script>
+    </script>
+
+    <!--formBox-->
+    </div>
+
+<!--Content-->
+</div>
+
+<div id='footer'></div>
+
+<!--container-->
+</div>
 
 </body>
 </html>
