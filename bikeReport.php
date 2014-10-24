@@ -30,6 +30,55 @@ $weatherAPIKey = $weatherAPIKey[0];
 	Functions
 */
 
+function checkAlerts($data)
+{
+	// Returns an array containing [0]: lights-on alerts, [1]: weather alerts
+
+	// Check if it's between 30 mins before dusk and 30 mins after dawn--the legal definition of 'night' for driving/road purposes in Ontario
+	$currentTime = $data->currently->time;
+	$sunriseToday = $data->daily->data[0]->sunrisetime;
+	$sunsetToday = $data->daily->data[0]->sunsetTime;
+	$icon = $data->currently->icon;
+	$lights;
+	$weather;
+	$alerts = array();
+
+	if( ($currentTime > $sunsetToday) && ($currentTime > ($sunsetToday + 1800) )  )  
+	{
+		// Then it's nighttime, before dawn.  
+		$lights = "Use lights: night";
+	}
+	if($currentTime < ($sunriseToday + 1800))
+	{
+		// Then it's nighttime, after dusk.
+		$lights = "Use lights: pre-dawn";
+	}
+	if(($currentTime > $sunsetToday) && ($curentTime < ($sunsetToday + 1800) ) )
+	{
+		$lights = "Use lights: dusk";
+	}
+
+	// Check for fog--append to any existing 
+	if($icon == "fog")
+	{
+		if($lights != "")
+		{
+			$lights .= ", fog.";	
+		}
+		else
+		{
+			$lights = "Use Lights: fog";
+		}
+	}
+	$lights .= "";
+
+	$weather = "";	// Placeholder until weather alerts are implemented
+
+	array_push($alerts, $lights, $weather);
+
+	return $alerts;
+}
+
 function bookmarkMe()
 {
 	$bookmarkMeOutput = "
@@ -174,12 +223,12 @@ function startUntilBody($cityName, $lat, $lng)
 			}
 
 			#left{
-			    width:35%;
+			    width:40%;
 			    float:left;
 			}
 
 			#right{
-			    width:55%;
+			    width:60%;
 			    float:right;
 			}
 
@@ -207,16 +256,62 @@ function startUntilBody($cityName, $lat, $lng)
 				background: rgba(255, 255, 255, .2);				
 			}
 
-			#bigMetascore {
+			#bigConditions {
 				text-align: center;
 				vertical-align: middle;
 				background: rgba(255, 255, 255, .5);
 			}
 
+			#bigConditions h1 { font-size: 250%; }
+
+			#bigTemperature {
+				text-align: center;
+				vertical-align: middle;
+				background: rgba(255, 255, 255, .5);
+			}
+
+			#bigTemperature h1 { font-size: 250%; }
+
 			#compassTitle {
 				text-align: top;
 				color: 'red';
 			}
+
+			.summaryTable {
+				width: 100%;
+				display: table;
+			}
+
+			.summaryRow {
+				display: table-row;
+				width: 100%;
+			}
+
+			.summaryCell {
+				display: table-cell;
+				width: 25%;
+			}
+
+			.summaryTitleCell {
+				width: 100%;
+			}
+
+			.topTable {
+				width: 100%;
+				display: table;
+			}
+
+			.topRow {
+				display: table-row;
+				width: 100%;
+			}
+
+			.topCell {
+				display: table-cell;
+				width: 33%;
+			}
+
+
 		</style>
 	</head>
 	<body>
@@ -270,7 +365,7 @@ function rotateArrow($windBearing)
 	$rotateArrowOutput .= "});";
 	$rotateArrowOutput .= "</script>";
 
-	$rotateArrowOutput .= "<img src='graphics/redArrow.png' alt='Wind Direction Arrow' id='windArrow'><br/>";
+	$rotateArrowOutput .= "<img src='graphics/redArrow.png' alt='Wind Direction Arrow' id='windArrow'/><br/>";
 
 	return $rotateArrowOutput;
 }
@@ -375,14 +470,30 @@ function convertTemp($temperature)
 	return ($temperature - 32) * (5/9);
 }
 
-function metascore($day, $units)
+function metascore($day, $units, $metaFlag)
 {
 	// Returns a metscore for a day based upon the input conditions for that day.
-	// Assumes $day is an associative array 
-	$windSpeed = floatval($day[1]);
-	$precipProbab = floatval($day[3][2]);
-	$temperature = floatval($day[4][0]);
-	$icon = $day[5];
+	// Depending upon $metaFlag, analyzes either instantaneous readings ($metaFlag == 0) or
+	// analyzes a later day's conditons from an associative array. 
+
+	// $day if instantaneous: [0]: windspeed, [1]: temperature, [2]: $icon
+	if($metaFlag == 0)
+	{
+		$temperature = $day[0];
+		$windSpeed = $day[1];
+		$icon = $day[2];
+	}
+	else
+	{
+		$windSpeed = floatval($day[1]);
+		$precipProbab = floatval($day[3][2]);
+
+		$temperatureMin = floatval($day[4][0]);
+		$temperatureMax = floatval($day[4][1]);
+		$temperature = (($temperatureMax - $temperatureMin) / 2) + $temperatureMin;
+
+		$icon = $day[5];
+	}
 
 	// Start off assuming perfect conditions
 	$score = 100;
@@ -440,6 +551,11 @@ function metascore($day, $units)
 
 	$score = round($score);
 
+	if($icon == "fog")
+	{
+		$score = $score - 10;
+	}
+
 	// Set a floor and ceiling to keep the overall value constrained.
 	if($score > 100)
 	{
@@ -476,72 +592,80 @@ function reportWeekly($week, $units, $weeklySummary)
 	// Assumes a properly formatted $week associative array.
 	$reportOutput;
 
-	// Table formatting flag: 1 means use a table, 0 means no.
-	$table = 1;
-
 	$weekdays = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
 	$unixDay = mktime();
 	$today = date('N', $unixDay); // Returns 1-7
 
-	if($table == 1)
-	{
-		$reportOutput .= "<table>\n";
-		$reportOutput .= "<tr><td colspan='4'><p><b><h3>Weekly Summary:</h3></b> " . $weeklySummary . "</p></td></tr>";
-		$reportOutput .= "<tr>\n";
+	$reportOutput .= "<div class='summaryTable'>\n";
 
-		$metaArray = array();
-		array_push($metaArray, $today);	// First element will indicate the starting day for the chart.
-		for($i = 0; $i <= 6; $i++)
-		{
-			array_push($metaArray, metascore($week[$i], $units));
-		}		
-		$graphData = makeGraph($metaArray);
+		$reportOutput .= "<div class='summaryRow'>\n";
+			$reportOutput .= "<div class='summaryTitleCell'>\n";
+			$reportOutput .= "<p><b><h3>Weekly Summary:</b>" . $weeklySummary ."</p>\n";
+			$reportOutput .= "</div>\n";
+		$reportOutput .= "</div>\n";
+	$reportOutput .= "</div>\n";
 
-		$reportOutput .= "</tr>\n";
-		$reportOutput .= "<tr>";
-	}
+	$reportOutput .= "<div class='summaryTable'>\n";
+
+
+	$metaArray = array();
+	array_push($metaArray, $today);	// First element will indicate the starting day for the chart.
 
 	for($i = 0; $i <= 6; $i++)
 	{
-		if($today <= 6)
+		array_push($metaArray, metascore($week[$i], $units, 1));
+	}		
+
+	$graphData = makeGraph($metaArray);
+
+	$reportOutput .= "<div class='summaryRow'>\n";
+	$firstDayFlag = 1;
+
+	for($i = 0; $i <= 6; $i++)
+	{
+
+		$reportOutput .= "<div class='summaryCell'>\n";
+		$reportOutput .= "<p>";
+
+		if($firstDayFlag == 1)
 		{
-			if($table == 1)
-			{
-				$reportOutput .= "<td>";
-			}
-			$reportOutput .= "<p>";
-			$reportOutput .= "<b><i>" . $weekdays[$today] . "</i></b>:<br/>\n";
-			$reportOutput .= $week[$i][0] . "<br/>\n";
-			}
+			$reportOutput .= "<b><i>Today (" . $weekdays[$today] . "):</i></b><br/>\n";	// weekday
+			$firstDayFlag = 0;
+		}
+		elseif($today <= 6)
+		{
+			$reportOutput .= "<b><i>" . $weekdays[$today] . ":</i></b><br/>\n";	// weekday
+		}
 		else
 		{
 			// We've gone off the end off the array, so compensate.
-			$reportOutput .= "<td>";
-			$reportOutput .= "<p>";
-			$reportOutput .= "<b><i>" . $weekdays[$today - 7] . "</i></b>:<br/>";
-			$reportOutput .= $week[$i][0] . "<br/>";
+			$reportOutput .= "<b><i>" . $weekdays[$today - 7] . "</i></b>:<br/>";	// Weekday
 		}
+
+		$reportOutput .= $week[$i][0] . "<br/>";	// This day's summary
 		$reportOutput .= "Wind speed/bearing: " . $week[$i][1] . " / " . $week[$i][2] . "<br/>\n";
 		$reportOutput .= "Precipitation: " . $week[$i][3][0] . " / " . $week[$i][3][1] . " / " . $week[$i][3][2] . "<br/>\n";
 		$reportOutput .= "Temperature: " . $week[$i][4][0] . " / " . $week[$i][4][1] . " / " . $week[$i][4][2] . " / " . $week[$i][4][3] . "<br/>\n";
 		$reportOutput .= "Icon: " . $week[$i][5] . "<br/>\n";
 
-		$reportOutput .= "Metascore: " . metascore($week[$i], $units) . "%<br/>\n";
+		$reportOutput .= "Metascore: " . metascore($week[$i], $units, 1) . "&#37;<br/>\n";
 
 		$reportOutput .= "</p>\n";
-		$reportOutput .= "</td>\n";
 		if($i == 3)
 		{
-			$reportOutput .= "</tr>\n<tr>";
+			$reportOutput .= "</div>\n";	// Close off this cell
+			$reportOutput .= "</div>\n";	// Close off the row
+			$reportOutput .= "<div class='summaryRow'>\n";	// Start new row
+		}
+		else
+		{
+			$reportOutput .= "</div>\n";	// Close off this cell
 		}
 		$today++;
 	}
-	if($table ==1)
-	{
-		$reportOutput .= "</tr></table>\n<table><tr>";
-	}
 
-	$reportOutput .= "</table>";
+	$reportOutput .= "</div>\n";	// Close off the last row
+	$reportOutput .= "</div>\n";	// Close off the "table"
 
 	$ret = array();
 	array_push($ret, $graphData, $reportOutput);
@@ -558,6 +682,7 @@ $endpoint = "https://api.forecast.io/forecast/" . $weatherAPIKey . "/" . $lat . 
 
 // Modify units based on CA (canada), UK, or US (default if not modified).  SI available, but not used here.
 $unitSettings = unitChoice($units);
+
 if($unitSettings != -1)
 {
 	$endpoint .= $unitSettings[0];
@@ -589,17 +714,21 @@ if ($search_results === NUL) die('Error parsing json');
 	Parse Weather Data
 */
 
+// We create variables like "$temperature" rather than "$json->currently->temperature" to make things easier to read and with less complexity.  
+// If this comes at the expense of slight extra resource usage, then so be it: the code will be more intuitive and have fewer typos.
+
 // Today's weather
 $currently = $json->currently->summary;
 $temperature = $json->currently->temperature;
 $windSpeed = $json->currently->windSpeed;
 $windBearing = $json->currently->windBearing;
+$todayIcon = $json->currently->icon;
 
 // Tomorrow's forecast
 $weeklyForecast = $json->daily->summary;
-$nextDayForecast = $json->daily->data[0]->summary;
-$nextDayTempMax = $json->daily->data[0]->temperatureMax;
-$nextDayTempMin = $json->daily->data[0]->temperatureMin;
+$nextDayForecast = $json->daily->data[1]->summary;
+$nextDayTempMax = $json->daily->data[1]->temperatureMax;
+$nextDayTempMin = $json->daily->data[1]->temperatureMin;
 
 /*
 	Associative Array for storing the next week's weather.  Each member represents a day.
@@ -623,7 +752,7 @@ $weeklyWeather = array();
 // Array for temp use in building $weeklyWeather
 $dailyWeather = array();
 
-// Populate $weeklyWeather from the JSON data
+// Populate $weeklyWeather from the JSON data. 
 for($i = 0; $i < 7; $i++)
 {
 	$dailyWeather[0] = $json->daily->data[$i]->summary;
@@ -646,6 +775,13 @@ for($i = 0; $i < 7; $i++)
 	$dailyWeather = array();
 }
 
+// Alerts
+// [0]: light-related alert message, [1]: weather-related alert message
+$todayAlerts = checkAlerts($json);
+
+// Prep an array for instantaneous metascore analysis
+$instantMeta = array($temperature, $windSpeed, $todayIcon);
+
 /*
 	Publish Weather Data
 */
@@ -661,11 +797,11 @@ $output .= "<div id='container'>\n";
 	$output .= "<div id='header'>\n";
 	$output .= "<h1>Bike Report: " . $cityName . "</h1>";
 	$output .= "<!--header--></div>\n";
-	$output .= "
-	<div id='navigation'>
-		<ul>
-			<li>";
-	$output .= "<a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a></li></ul>";
+	$output .= "<div id='navigation'>\n";
+	$output .= "<ul>\n";
+//	$output .= "<li><a href='#' title='Try Another City'>Try Another City</a></li>";
+	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a></li>";
+	$output .= "</ul>";
 	$output .= "<!--navigation--></div>";
 
 	// Content
@@ -676,48 +812,57 @@ $output .= "<div id='container'>\n";
 
 		$output .= "<div id='left'>\n";
 		$output .= $weekAndGraph[0]; // Print out the graph code		
-		$output .= "<div id='chart_div' style='width: 600px;'></div>\n";
+		$output .= "<div id='chart_div' style='width: 90%;'></div>\n";
 		$output .= "<!--left--></div>\n";
 
 		$output .= "<div id='right'>\n";
 
-			$output .= "<table><tr>";
-			$output .= "<td>";
+			$output .= "<div class='topTable'>\n";
 
+			// Deprecated/testing
 			//$output .= "<p><b>Data:</b> " . $cityName . ", " . $state . ", " . $country . ", " . $lat . ", " . $lng .  ", " . $units . "<br/>\n";
-
 			//$output .= "<b>Time: </b>" . time() . "<br/>\n";
-			$output .= "<p><b>Present Conditions:</b> " . $currently . "<br/>\n";
-			$output .= "<b>Temperature: </b>" . round($temperature) . " " . $tempSuffix . "<br/>\n";
-
-			$output .= "<b>Metascore: </b>" . metascore($dailyWeather, $units) . "%<br/>\n"; 
-
 			//$output .= "<b>Time Tomorrow: </b>" . (time() + 86400) . "<br/>\n";
-			$output .= "<b>24hr Forecast: </b>" . $nextDayForecast . "<br/>\n";
-			$output .= "<b>Low / High tomorrow: </b>" . round($nextDayTempMin) . " " . $tempSuffix . " / " . round($nextDayTempMax) . $tempSuffix . "<br/>\n";
+				$output .= "<div class='topRow'>\n";
 
-			$output .= "<b>Weekly Forecast: </b><br/>" . $weeklyForecast . "<br/>\n";
-			//$output .= "<div id='chart_div' style='width: 900px; height: 200px; margin-left:auto; margin-right:auto;'></div>\n";
-			$output .= "</td>";
+					$output .= "<div class='topCell' id='bigTemperature'>\n";
 
-			$output .= "<td id='bigCompass'>";
-			$output .= "<span id='compassTitle'>Wind Speed: " .  round($windSpeed) . " " . speedUnits($units) . "</span><br/>";
-			$output .= rotateArrow($windBearing);
+						$output .= "<h1>" . metascore($instantMeta, $units, 0) . "&#37;</h1>";
+						$output .= "<b>" . round($temperature) . " " . $tempSuffix . "</b><br/>\n";
 
-			$output .= "</td>";
+//						if($todayAlerts[0] != "")
+//						{			
+//							$output .= "<b>" . $todayAlerts[0] . "</b>";
+//						}
 
-			$output .= "<td id='bigMetascore'>";
-			$output .= "<h1>" . metascore($dailyWeather, $units) . "%</h1>";
-			$output .= "</td>";
+					$output .= "</p>\n";
+					$output .= "</div>\n";	// Close conditions right now cell
 
-			$output .= "</tr>";
-			$output .= "</table>";
+					$output .= "<div class='topCell' id='bigCompass'>\n";
 
-		$output .= "<!--right--></div>";
+						$output .= "<b>Wind:</b><br/>\n"; 
+						$output .= rotateArrow($windBearing);
+						$output .= "<b>" . round($windSpeed) . " " . speedUnits($units) . "  (" . compass($windBearing) . ")</b><br/>\n";
+
+					$output .= "<!--compass cell--></div>\n";	// Close compass cell
+
+					$output .= "<div class='topCell' id='bigConditions'>\n";
+						$output .= "<!--Novacons Weather Icons, by Chet Design: digitalchet.deviantart.com/art/Novacons-Weather-Icons-13133337-->\n";
+						$output .= "<img src='graphics/icons/" . $todayIcon . ".png' alt='Current Weather: " . $todayIcon . "' id='weatherIcon' height='100' width='100'/><br/>";
+						$output .= "<p><b>Today's Conditions:</b> " . $currently . ".  " . $weeklyWeather[0][0] . "<br/>\n";
+
+
+					$output .= "<!--metascore cell--></div>\n";	
+
+				$output .= "<!--topRow--></div>\n";	
+
+		$output .= "<!--topTable--></div>";	
+
+		$output .= "<!--right--></div>\n";	
 
 		$output .= "<div id='below'>";
 		$output .= $weekAndGraph[1]; // Print out the Weekly Summary
-		$output .= "</div>";
+		$output .= "<!--below--></div>";
 
 		print $output;
 
