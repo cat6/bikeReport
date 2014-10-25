@@ -30,6 +30,16 @@ $weatherAPIKey = $weatherAPIKey[0];
 	Functions
 */
 
+function psaImage($imageName, $alt)
+{
+	// Returns the <img> tag for a PSA image for the page, whose name is $imageName
+	// Functionalizing the process allows for the later possibility of rotating images (e.g. from a hard-coded array
+	// or external source) on a regular basis.
+	// Assumes that $imageName is the name of a valid image in /graphics/psa/, and that $alt is a string of descriptive text.
+	return "<img src='graphics/psa/" . $imageName . "' alt='" . $alt . "' id='psaImage' width='100%' height='100%' />";
+//return "<span class='psaSpan' style='background: graphics/" . . "'></span>\n";
+}
+
 function checkAlerts($data)
 {
 	// Returns an array containing [0]: lights-on alerts, [1]: weather alerts
@@ -79,6 +89,65 @@ function checkAlerts($data)
 	return $alerts;
 }
 
+function thermometer()
+{
+
+	$thermometerOutput = "
+	<script>
+/**
+ * Thermometer Progress meter.
+ * This function will update the progress element in the \"thermometer\"
+ * to the updated percentage.
+ * If no parameters are passed in it will read them from the DOM
+ *
+ * @param {Number} goalAmount The Goal amount, this represents the 100% mark
+ * @param {Number} progressAmount The progress amount is the current amount
+ * @param {Boolean} animate Whether to animate the height or not
+ *
+ */
+function thermometer(id, goalAmount, progressAmount, animate) {
+    \"use strict\";
+
+    var \$thermo = \$(\"#\"+id),
+        \$progress = \$(\".progress\", \$thermo),
+        \$goal = \$(\".goal\", \$thermo),
+        percentageAmount,
+        isHorizontal = \$thermo.hasClass(\"horizontal\"),
+        newCSS = {};
+
+    goalAmount = goalAmount || parseFloat( \$goal.text() ),
+    progressAmount = progressAmount || parseFloat( \$progress.text() ),
+    percentageAmount =  Math.min( Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
+
+    //let\"s format the numbers and put them back in the DOM
+    \$goal.find(\".amount\").text( goalAmount + \"c\" );
+    \$progress.find(\".amount\").text( progressAmount + \"c\" );
+
+
+    //let\"s set the progress indicator
+    \$progress.find(\".amount\").hide();
+
+    newCSS[ isHorizontal ? \"width\" : \"height\" ] = percentageAmount + \"%\";
+
+    if (animate !== false) {
+        \$progress.animate( newCSS, 1200, function(){
+            \$(this).find(\".amount\").fadeIn(500);
+        });
+    }
+    else {
+        \$progress.css( newCSS );
+        \$progress.find(\".amount\").fadeIn(500);
+    }
+}
+
+\$(document).ready(function(){
+    thermometer(\"thermo1\");
+});
+</script>
+	";
+	return $thermometerOutput;
+}
+
 function bookmarkMe()
 {
 	$bookmarkMeOutput = "
@@ -118,13 +187,11 @@ function startUntilBody($cityName, $lat, $lng)
 		<link href='http://fonts.googleapis.com/css?family=Droid+Serif%7CCrimson+Text' rel='stylesheet' type='text/css'>
 
 		<style type='text/css'>
-			#image{
-	  			margin:100px 100px;
-			}
-			
+
 			html, body {
    				padding: 0;
      			margin: 0;
+     			height: 100%;
 			}
 
 			body {
@@ -134,10 +201,12 @@ function startUntilBody($cityName, $lat, $lng)
 
 			#container
 			{
+				background: #72A0C1;
 				margin-left: auto;
 				margin-right: auto;
-				height: auto;
+
 				width: auto;
+				min-height: 100%;
 			}
 
 			#header
@@ -199,9 +268,9 @@ function startUntilBody($cityName, $lat, $lng)
 			#content
 			{
 				background: #72A0C1;
-
+				height: 100%;
 				overflow: hidden;
-				min-height: 700px;
+				min-height: 100%;
 				padding-left: 10px;
 				padding-right: 10px;
 			}
@@ -213,6 +282,10 @@ function startUntilBody($cityName, $lat, $lng)
 				margin: 0 0 .5em;
 			}
 
+			#topContent {
+				width: 100%;
+			}
+
 			#footer
 			{
 				background: #333;
@@ -220,6 +293,7 @@ function startUntilBody($cityName, $lat, $lng)
 				text-align: right;
 				padding: 20px;
 				height: 1%;
+
 			}
 
 			#left{
@@ -264,6 +338,10 @@ function startUntilBody($cityName, $lat, $lng)
 
 			#bigConditions h1 { font-size: 250%; }
 
+			#bigMetaTherm {
+				height: 100%;
+			}
+
 			#bigTemperature {
 				text-align: center;
 				vertical-align: middle;
@@ -271,6 +349,14 @@ function startUntilBody($cityName, $lat, $lng)
 			}
 
 			#bigTemperature h1 { font-size: 250%; }
+
+			#bigMeta {
+				text-align: center;
+				vertical-align: middle;
+				background: rgba(255, 255, 255, .2);
+			}
+
+			#bigMeta h1 { font-size: 250%; }
 
 			#compassTitle {
 				text-align: top;
@@ -292,6 +378,22 @@ function startUntilBody($cityName, $lat, $lng)
 				width: 25%;
 			}
 
+			.miniCellTop {
+				display: table-cell;
+				width: 50%;	
+
+				text-align: center;
+				vertical-align: middle;
+			}
+
+			.miniCellBottom {
+				display: table-cell;
+				width: 50%;	
+
+				text-align: center;
+				vertical-align: middle;
+			}
+
 			.summaryTitleCell {
 				width: 100%;
 			}
@@ -308,7 +410,82 @@ function startUntilBody($cityName, $lat, $lng)
 
 			.topCell {
 				display: table-cell;
-				width: 33%;
+				width: 25%;
+			}
+
+			/* Thermometer */
+
+			.thermometer {
+			    margin-left: 35%;
+			}
+			.thermometer {
+			    width:40px;
+			    height:100px;
+			    position: relative;
+			    background: #ddd;
+			    border:1px solid #aaa;
+			    -webkit-border-radius: 12px;
+			       -moz-border-radius: 12px;
+			        -ms-border-radius: 12px;
+			         -o-border-radius: 12px;
+			            border-radius: 12px;
+
+			    -webkit-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			       -moz-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			        -ms-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			         -o-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			            box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			}
+
+			.thermometer .track {
+			    height:80px;
+			    top:10px;
+			    width:20px;
+			    border: 1px solid #aaa;
+			    position: relative;
+			    margin:0 auto;
+			    background: rgb(255,255,255);
+			    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgb(0,0,0)), color-stop(1%,rgb(255,255,255)));
+			    background: -webkit-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background:      -o-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background:     -ms-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background:    -moz-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background:   linear-gradient(to bottom, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background-position: 0 -1px;
+			    background-size: 100% 5%;
+			}
+
+			.thermometer .progress {
+			    height:0%;
+			    width:100%;
+			    background: rgb(20,100,20);
+			    background: rgba(255,0,0,0.9);
+			    position: absolute;
+			    bottom:0;
+			    left:0;
+			}
+
+			.thermometer .goal {
+			    position:absolute;
+			    top:0;
+			    visibility: hidden;
+			}
+
+			.thermometer .amount {
+			    display: inline-block;
+			    padding:0 5px 0 60px;
+			    border-top:1px solid black;
+			    font-family: Trebuchet MS;
+			    font-weight: bold;
+			    color:#333;
+			}
+
+			.thermometer .progress .amount {
+			    padding:0 35px 0 5px;
+			    position: absolute;
+			    border-top:1px solid 'black';
+			    color:'black';
+			    right:0;
 			}
 
 
@@ -411,7 +588,7 @@ function makeGraph($points)
     $graphOutput .= "]);
 
         var options = {
-        title: 'Cycling Conditions',
+        title: 'Cycling Conditions This Week',
         fontName: 'Crimson+Text',
         titleTextStyle: {color: '#FAEBD7'},
         series: { 0:{ color: '#FAEBD7'} },
@@ -586,7 +763,7 @@ function compass($degrees)
 	return $compdir;
 }
 
-function reportWeekly($week, $units, $weeklySummary)
+function reportWeekly($week, $units, $weeklySummary, $json)
 {
 	// Reports the contents of an associative array, $week, containing data about the following week's weather forecast.
 	// Assumes a properly formatted $week associative array.
@@ -595,18 +772,19 @@ function reportWeekly($week, $units, $weeklySummary)
 	$weekdays = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
 	$unixDay = mktime();
 	$today = date('N', $unixDay); // Returns 1-7
+	$cityName = $_GET["cityName"];
 
 	$reportOutput .= "<div class='summaryTable'>\n";
 
 		$reportOutput .= "<div class='summaryRow'>\n";
 			$reportOutput .= "<div class='summaryTitleCell'>\n";
-			$reportOutput .= "<p><b><h3>Weekly Summary:</b>" . $weeklySummary ."</p>\n";
+			$reportOutput .= "<p><b><h3>Weekly Summary:</b>" . $weeklySummary. "  ";
+			$reportOutput .= "<a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area' style='position: static; overflow: visible; float: none; display: inline;'>Bike-friendly routes for " . $cityName . "</a></h3></p>\n";
 			$reportOutput .= "</div>\n";
 		$reportOutput .= "</div>\n";
 	$reportOutput .= "</div>\n";
 
 	$reportOutput .= "<div class='summaryTable'>\n";
-
 
 	$metaArray = array();
 	array_push($metaArray, $today);	// First element will indicate the starting day for the chart.
@@ -621,46 +799,57 @@ function reportWeekly($week, $units, $weeklySummary)
 	$reportOutput .= "<div class='summaryRow'>\n";
 	$firstDayFlag = 1;
 
-	for($i = 0; $i <= 6; $i++)
+	for($i = 0; $i <= 7; $i++)
 	{
+		if($i < 7)
+		{
+			$reportOutput .= "<div class='summaryCell'>\n";
+			$reportOutput .= "<p>";
 
-		$reportOutput .= "<div class='summaryCell'>\n";
-		$reportOutput .= "<p>";
-
-		if($firstDayFlag == 1)
-		{
-			$reportOutput .= "<b><i>Today (" . $weekdays[$today] . "):</i></b><br/>\n";	// weekday
-			$firstDayFlag = 0;
-		}
-		elseif($today <= 6)
-		{
-			$reportOutput .= "<b><i>" . $weekdays[$today] . ":</i></b><br/>\n";	// weekday
-		}
-		else
-		{
-			// We've gone off the end off the array, so compensate.
-			$reportOutput .= "<b><i>" . $weekdays[$today - 7] . "</i></b>:<br/>";	// Weekday
-		}
+			if($firstDayFlag == 1)
+			{
+				$reportOutput .= "<b><i>Today (" . $weekdays[$today] . "):</i></b><br/>\n";	// weekday
+				$firstDayFlag = 0;
+			}
+			elseif($today <= 6)
+			{
+				$reportOutput .= "<b><i>" . $weekdays[$today] . ":</i></b><br/>\n";	// weekday
+			}
+			else
+			{
+				// We've gone off the end off the array, so compensate.
+				$reportOutput .= "<b><i>" . $weekdays[$today - 7] . "</i></b>:<br/>";	// Weekday
+			}
 
 		$reportOutput .= $week[$i][0] . "<br/>";	// This day's summary
-		$reportOutput .= "Wind speed/bearing: " . $week[$i][1] . " / " . $week[$i][2] . "<br/>\n";
-		$reportOutput .= "Precipitation: " . $week[$i][3][0] . " / " . $week[$i][3][1] . " / " . $week[$i][3][2] . "<br/>\n";
-		$reportOutput .= "Temperature: " . $week[$i][4][0] . " / " . $week[$i][4][1] . " / " . $week[$i][4][2] . " / " . $week[$i][4][3] . "<br/>\n";
-		$reportOutput .= "Icon: " . $week[$i][5] . "<br/>\n";
+			$reportOutput .= "Wind speed/bearing: " . round($week[$i][1]) . " / " . $week[$i][2] . "<br/>\n";
+			$reportOutput .= "Precipitation: " . $week[$i][3][2] . "<br/>\n";
+			$reportOutput .= "Temperature min/max: " . round($week[$i][4][0]) . " / " . round($week[$i][4][1]) . "<br/>\n"; 
+			$reportOutput .= "Feels like: " . round($week[$i][4][2]) . " / " . round($week[$i][4][3]) . "<br/>\n";
+			$reportOutput .= "Icon: " . $week[$i][5] . "&#37;<br/>\n";
 
-		$reportOutput .= "Metascore: " . metascore($week[$i], $units, 1) . "&#37;<br/>\n";
+			$reportOutput .= "Metascore: " . metascore($week[$i], $units, 1) . "&#37;\n";
 
-		$reportOutput .= "</p>\n";
-		if($i == 3)
-		{
-			$reportOutput .= "</div>\n";	// Close off this cell
-			$reportOutput .= "</div>\n";	// Close off the row
-			$reportOutput .= "<div class='summaryRow'>\n";	// Start new row
+			$reportOutput .= "</p>\n";
+			if($i == 3)
+			{
+				$reportOutput .= "</div>\n";	// Close off this cell
+				$reportOutput .= "</div>\n";	// Close off the row
+				$reportOutput .= "<div class='summaryRow'>\n";	// Start new row
+			}
+			else
+			{
+				$reportOutput .= "</div>\n";	// Close off this cell
+			}
 		}
-		else
+
+	    if($i == 7)
 		{
-			$reportOutput .= "</div>\n";	// Close off this cell
+			$reportOutput .= "<div class='summaryCell' id='psaImage' style='background-image: url(graphics/psa/clown.jpg); background-size: 70%; background-repeat:no-repeat; background-height:100%;'>\n";
+			//$reportOutput .= psaImage("clown.jpg", "Don't be a clown, tilt your lights down!");
+			$reportOutput .= "</div>\n";
 		}
+
 		$today++;
 	}
 
@@ -793,9 +982,10 @@ $output .= startUntilBody($cityName, $lat, $lng);
 $output .= "<div id='container'>\n";
 	$output .= bookmarkMe();
 
+
 	// Header
 	$output .= "<div id='header'>\n";
-	$output .= "<h1>Bike Report: " . $cityName . "</h1>";
+	$output .= "<h1>Bike Report: " . $cityName . "</h1>\n";
 	$output .= "<!--header--></div>\n";
 	$output .= "<div id='navigation'>\n";
 	$output .= "<ul>\n";
@@ -807,8 +997,10 @@ $output .= "<div id='container'>\n";
 	// Content
 	$output .= "<div id='content'>\n";
 
+	$output .= "<div id='topContent'>\n";
+
 		// Report the week's weather
-		$weekAndGraph = reportWeekly($weeklyWeather, $units, $weeklyForecast);
+		$weekAndGraph = reportWeekly($weeklyWeather, $units, $weeklyForecast, $json);
 
 		$output .= "<div id='left'>\n";
 		$output .= $weekAndGraph[0]; // Print out the graph code		
@@ -825,24 +1017,58 @@ $output .= "<div id='container'>\n";
 			//$output .= "<b>Time Tomorrow: </b>" . (time() + 86400) . "<br/>\n";
 				$output .= "<div class='topRow'>\n";
 
-					$output .= "<div class='topCell' id='bigTemperature'>\n";
-
-						$output .= "<h1>" . metascore($instantMeta, $units, 0) . "&#37;</h1>";
-						$output .= "<b>" . round($temperature) . " " . $tempSuffix . "</b><br/>\n";
+						$output .= "<div class='topCell'  id='bigMeta'>\n";
+						$output .= "<h1>" . metascore($instantMeta, $units, 0) . "&#37; </h1>";
+						$output .= "<b>Metascore</b>\n";
+						$output .= "<!--topCell(meta)--></div>\n";
 
 //						if($todayAlerts[0] != "")
 //						{			
 //							$output .= "<b>" . $todayAlerts[0] . "</b>";
 //						}
 
-					$output .= "</p>\n";
-					$output .= "</div>\n";	// Close conditions right now cell
+					if($units == "UK" or "CA")
+					{
+						// Celcius thermometer--set max value. 
+						$thermoScale = 50;
+					}
+					else
+					{
+						// Fahrenheit thermometer--set max value.
+						$thermoScale = 100;
+					}
+
+					$output .= "<div class='topCell'  id='bigTemperature'>\n";
+					$output .= "
+								<div id='thermo1' class='thermometer'>
+								    <div class='track'>
+								        <div class='goal'>
+								            <div class='amount'>";
+
+								        $output .= $thermoScale;
+
+								        $output .= "<!--amount--></div>
+								        <!--goal--></div>
+								        <div class='progress'>
+								            <div class='amount'>";
+
+								         $output .= round($temperature);
+
+								        $output .= "<!--amount--></div>
+								        <!--progress--></div>
+								    <!--track--></div>
+								<!--thermo1--></div>
+					\n";
+					$output .= thermometer();
+					$output .= "<b>Temperature</b>\n";
+					$output .= "<!--topCell(thermo)--></div>\n";
+
+//					$output .= "</div>\n";	// Close conditions right now cell
 
 					$output .= "<div class='topCell' id='bigCompass'>\n";
 
-						$output .= "<b>Wind:</b><br/>\n"; 
 						$output .= rotateArrow($windBearing);
-						$output .= "<b>" . round($windSpeed) . " " . speedUnits($units) . "  (" . compass($windBearing) . ")</b><br/>\n";
+						$output .= "<b>Wind:" . round($windSpeed) . " " . speedUnits($units) . "  (" . compass($windBearing) . ")</b><br/>\n";
 
 					$output .= "<!--compass cell--></div>\n";	// Close compass cell
 
@@ -859,6 +1085,10 @@ $output .= "<div id='container'>\n";
 		$output .= "<!--topTable--></div>";	
 
 		$output .= "<!--right--></div>\n";	
+
+		$output .= "<div style='clear: both;''></div>\n";
+
+		$output .= "<!--topContent--></div>\n";
 
 		$output .= "<div id='below'>";
 		$output .= $weekAndGraph[1]; // Print out the Weekly Summary
