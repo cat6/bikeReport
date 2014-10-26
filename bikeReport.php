@@ -258,9 +258,11 @@ function startUntilBody($cityName, $lat, $lng)
 			#navigation li a
 			{
 				display: block;
+				float: left;
 				padding: 5px 10px;
 				color: #fff;
 				text-decoration: none;
+				border-right: 1px solid #fff;
 			}
 
 			#navigation li a:hover { background: #5D8AA8; }
@@ -779,7 +781,6 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 		$reportOutput .= "<div class='summaryRow'>\n";
 			$reportOutput .= "<div class='summaryTitleCell'>\n";
 			$reportOutput .= "<p><b><h3>Weekly Summary:</b>" . $weeklySummary. "  ";
-			$reportOutput .= "<a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area' style='position: static; overflow: visible; float: none; display: inline;'>Bike-friendly routes for " . $cityName . "</a></h3></p>\n";
 			$reportOutput .= "</div>\n";
 		$reportOutput .= "</div>\n";
 	$reportOutput .= "</div>\n";
@@ -823,10 +824,10 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 
 		$reportOutput .= $week[$i][0] . "<br/>";	// This day's summary
 			$reportOutput .= "Wind speed/bearing: " . round($week[$i][1]) . " / " . $week[$i][2] . "<br/>\n";
-			$reportOutput .= "Precipitation: " . $week[$i][3][2] . "<br/>\n";
+			$reportOutput .= "P.O.P.: " . ($week[$i][3][2] * 100) . " &#37;<br/>\n";
 			$reportOutput .= "Temperature min/max: " . round($week[$i][4][0]) . " / " . round($week[$i][4][1]) . "<br/>\n"; 
 			$reportOutput .= "Feels like: " . round($week[$i][4][2]) . " / " . round($week[$i][4][3]) . "<br/>\n";
-			$reportOutput .= "Icon: " . $week[$i][5] . "&#37;<br/>\n";
+			//$reportOutput .= "Icon: " . $week[$i][5] . "<br/>\n";
 
 			$reportOutput .= "Metascore: " . metascore($week[$i], $units, 1) . "&#37;\n";
 
@@ -989,8 +990,10 @@ $output .= "<div id='container'>\n";
 	$output .= "<!--header--></div>\n";
 	$output .= "<div id='navigation'>\n";
 	$output .= "<ul>\n";
-//	$output .= "<li><a href='#' title='Try Another City'>Try Another City</a></li>";
+	$output .= "<li><a href='http://www.brianneary.net/EXPERIMENTS/newBikeReport/bikeReport.html' title='Try Another City'>Try Another City</a></li>";
+	$output .= "<li><a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area'>Bike-friendly routes: " . $cityName . "</a></li></h3>\n";
 	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a></li>";
+	$output .= "<li><a href=''/>Contact Webmaster</a></li>\n";
 	$output .= "</ul>";
 	$output .= "<!--navigation--></div>";
 
