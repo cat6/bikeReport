@@ -45,27 +45,28 @@ function checkAlerts($data)
 	// Returns an array containing [0]: lights-on alerts, [1]: weather alerts
 
 	// Check if it's between 30 mins before dusk and 30 mins after dawn--the legal definition of 'night' for driving/road purposes in Ontario
-	$currentTime = $data->currently->time;
-	$sunriseToday = $data->daily->data[0]->sunrisetime;
-	$sunsetToday = $data->daily->data[0]->sunsetTime;
+	//$currentTime = $data->currently->time;
+	$localTime = $data->currently->time + (3600 * $data->offset);
+	$sunriseToday = $data->daily->data[0]->sunrisetime + (3600 * $data->offset);
+	$sunsetToday = $data->daily->data[0]->sunsetTime + (3600 * $data->offset);
 	$icon = $data->currently->icon;
 	$lights;
 	$weather;
 	$alerts = array();
 
-	if( ($currentTime > $sunsetToday) && ($currentTime > ($sunsetToday + 1800) )  )  
+	if( ($localTime > $sunsetToday) && ($sunsetToday > -1800) )    
 	{
 		// Then it's nighttime, before dawn.  
-		$lights = "Use lights: night";
+		$lights = "use lights (night)";
 	}
-	if($currentTime < ($sunriseToday + 1800))
+	if($localTime  < ($sunriseToday + 1800))
 	{
 		// Then it's nighttime, after dusk.
-		$lights = "Use lights: pre-dawn";
+		$lights = "use lights (pre-dawn)";
 	}
-	if(($currentTime > $sunsetToday) && ($curentTime < ($sunsetToday + 1800) ) )
+	if(($localTime  < $sunsetToday) && ($localTime  > ($sunsetToday - 1800) ) )
 	{
-		$lights = "Use lights: dusk";
+		$lights = "use lights (dusk)";
 	}
 
 	// Check for fog--append to any existing 
@@ -77,10 +78,9 @@ function checkAlerts($data)
 		}
 		else
 		{
-			$lights = "Use Lights: fog";
+			$lights = "use Lights (fog)";
 		}
 	}
-	$lights .= "";
 
 	$weather = "";	// Placeholder until weather alerts are implemented
 
@@ -89,9 +89,9 @@ function checkAlerts($data)
 	return $alerts;
 }
 
-function thermometer()
+function thermometer($units)
 {
-
+	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
 	$thermometerOutput = "
 	<script>
 /**
@@ -120,10 +120,13 @@ function thermometer(id, goalAmount, progressAmount, animate) {
     percentageAmount =  Math.min( Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
 
     //let\"s format the numbers and put them back in the DOM
-    \$goal.find(\".amount\").text( goalAmount + \"c\" );
-    \$progress.find(\".amount\").text( progressAmount + \"c\" );
+    \$goal.find(\".amount\").text( goalAmount +";
 
+    $thermometerOutput .= "\"" . $unitChoices[1] . "\" );";
+    $thermometerOutput .= "\$progress.find(\".amount\").text( progressAmount +";
+    $thermometerOutput .= "\"" . $unitChoices[1] . "\" );";
 
+	$thermometerOutput .= "
     //let\"s set the progress indicator
     \$progress.find(\".amount\").hide();
 
@@ -413,6 +416,11 @@ function startUntilBody($cityName, $lat, $lng)
 			.topCell {
 				display: table-cell;
 				width: 25%;
+			}
+
+			#alert {
+				color: yellow;
+				margin-left: 10em;
 			}
 
 			/* Thermometer */
@@ -775,12 +783,23 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 	$unixDay = mktime();
 	$today = date('N', $unixDay); // Returns 1-7
 	$cityName = $_GET["cityName"];
+	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
+
 
 	$reportOutput .= "<div class='summaryTable'>\n";
-
 		$reportOutput .= "<div class='summaryRow'>\n";
 			$reportOutput .= "<div class='summaryTitleCell'>\n";
-			$reportOutput .= "<p><b><h3>Weekly Summary:</b>" . $weeklySummary. "  ";
+			$reportOutput .= "<p><b><h3>Weekly Summary: </b>" . $weeklySummary. "  ";
+
+			// Alerts
+			// [0]: light-related alert message, [1]: weather-related alert message
+			$todayAlerts = checkAlerts($json);
+
+			if($todayAlerts[0] != "")
+			{		
+				$reportOutput .= "<span id='alert'><b>Warning:</span> " . $todayAlerts[0] . "</b></p>";
+			}
+
 			$reportOutput .= "</div>\n";
 		$reportOutput .= "</div>\n";
 	$reportOutput .= "</div>\n";
@@ -809,8 +828,16 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 
 			if($firstDayFlag == 1)
 			{
-				$reportOutput .= "<b><i>Today (" . $weekdays[$today] . "):</i></b><br/>\n";	// weekday
-				$firstDayFlag = 0;
+				if($today <= 6)
+				{
+					$reportOutput .= "<b><i>Today (" . $weekdays[$today] . "):</i></b><br/>\n";	// weekday
+					$firstDayFlag = 0;
+				}
+				else
+				{
+					$reportOutput .= "<b><i>Today (" . $weekdays[$today - 7] . "):</i></b><br/>\n";	// weekday
+					$firstDayFlag = 0;	
+				}
 			}
 			elseif($today <= 6)
 			{
@@ -823,10 +850,10 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 			}
 
 		$reportOutput .= $week[$i][0] . "<br/>";	// This day's summary
-			$reportOutput .= "Wind speed/bearing: " . round($week[$i][1]) . " / " . $week[$i][2] . "<br/>\n";
+			$reportOutput .= "Wind speed/bearing: " . round($week[$i][1]) . " " . $unitChoices[2] . " / " . $week[$i][2] . "&deg;<br/>\n";
 			$reportOutput .= "P.O.P.: " . ($week[$i][3][2] * 100) . " &#37;<br/>\n";
-			$reportOutput .= "Temperature min/max: " . round($week[$i][4][0]) . " / " . round($week[$i][4][1]) . "<br/>\n"; 
-			$reportOutput .= "Feels like: " . round($week[$i][4][2]) . " / " . round($week[$i][4][3]) . "<br/>\n";
+			$reportOutput .= "Temperature min/max: " . round($week[$i][4][0]) . "&deg;" . $unitChoices[1] . " / " . round($week[$i][4][1]) . "&deg;" . $unitChoices[1] . "<br/>\n"; 
+			$reportOutput .= "Feels like: " . round($week[$i][4][2]) . "&deg;" .  $unitChoices[1] . " / " . round($week[$i][4][3]) . "&deg;" .   $unitChoices[1] . "<br/>\n";
 			//$reportOutput .= "Icon: " . $week[$i][5] . "<br/>\n";
 
 			$reportOutput .= "Metascore: " . metascore($week[$i], $units, 1) . "&#37;\n";
@@ -965,9 +992,6 @@ for($i = 0; $i < 7; $i++)
 	$dailyWeather = array();
 }
 
-// Alerts
-// [0]: light-related alert message, [1]: weather-related alert message
-$todayAlerts = checkAlerts($json);
 
 // Prep an array for instantaneous metascore analysis
 $instantMeta = array($temperature, $windSpeed, $todayIcon);
@@ -1025,12 +1049,8 @@ $output .= "<div id='container'>\n";
 						$output .= "<b>Metascore</b>\n";
 						$output .= "<!--topCell(meta)--></div>\n";
 
-//						if($todayAlerts[0] != "")
-//						{			
-//							$output .= "<b>" . $todayAlerts[0] . "</b>";
-//						}
 
-					if($units == "UK" or "CA")
+					if($units == "UK" or $units == "CA")
 					{
 						// Celcius thermometer--set max value. 
 						$thermoScale = 50;
@@ -1062,7 +1082,7 @@ $output .= "<div id='container'>\n";
 								    <!--track--></div>
 								<!--thermo1--></div>
 					\n";
-					$output .= thermometer();
+					$output .= thermometer($units);
 					$output .= "<b>Temperature</b>\n";
 					$output .= "<!--topCell(thermo)--></div>\n";
 

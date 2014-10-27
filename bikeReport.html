@@ -294,7 +294,7 @@
             // Perform Google geolocation
             cityXML = new XMLHttpRequest();
             cityURL1 = "http://maps.googleapis.com/maps/api/geocode/json?address=";
-            cityName = frm.cityInput.value;
+            cityName = frm.cityInput.value.trim();
             cityURL2 = "&sensor=false";
             cityURL = cityURL1 + cityName + cityURL2;
 
@@ -370,6 +370,14 @@
                 {
                     // Not all localities are proper cities.  Some are "routes", etc..  Filter these out.
                     if(jsonArr.results[i].address_components[j].long_name.toLowerCase() == cityName.toLowerCase())
+                    {
+                        candidate[2] = jsonArr.results[i].address_components[j].long_name;
+                        output += "<td>";
+                        output += "<tr><td><b>City: </b></td><td>" + candidate[2] + "</td></tr>";
+                        cityFlag = 1;
+                    }
+                    // if formatted_address.toLower() includes the name.toLower(), then its likely a good guess
+                    if (jsonArr.results[i].formatted_address.toLowerCase().indexOf(cityName.toLowerCase()) >= 0)
                     {
                         candidate[2] = jsonArr.results[i].address_components[j].long_name;
                         output += "<td>";
