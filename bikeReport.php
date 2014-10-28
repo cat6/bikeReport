@@ -30,6 +30,35 @@ $weatherAPIKey = $weatherAPIKey[0];
 	Functions
 */
 
+function periodOfDay($data)
+{
+	// returns 0 for daytime, 1 for dusk, 2 for night, and 3 for dawn
+	$localTime = $data->currently->time + (3600 * $data->offset);
+	$sunriseToday = $data->daily->data[0]->sunrisetime + (3600 * $data->offset);
+	$sunsetToday = $data->daily->data[0]->sunsetTime + (3600 * $data->offset);
+
+	$ret = 0;	// Default; daytime.
+
+	if( ($localTime > $sunsetToday) && ($sunsetToday > -1800) )    
+	{
+		// Night
+		$ret = 2;
+	}
+	if($localTime  < ($sunriseToday + 1800))
+	{
+		// Dawn
+		$ret = 3;
+	}
+	if(($localTime  < $sunsetToday) && ($localTime  > ($sunsetToday - 1800) ) )
+	{
+		// Dusk
+		$ret = 1;
+	}
+
+
+	return $ret;
+}
+
 function psaImage($imageName, $alt)
 {
 	// Returns the <img> tag for a PSA image for the page, whose name is $imageName
@@ -46,25 +75,24 @@ function checkAlerts($data)
 
 	// Check if it's between 30 mins before dusk and 30 mins after dawn--the legal definition of 'night' for driving/road purposes in Ontario
 	//$currentTime = $data->currently->time;
-	$localTime = $data->currently->time + (3600 * $data->offset);
-	$sunriseToday = $data->daily->data[0]->sunrisetime + (3600 * $data->offset);
-	$sunsetToday = $data->daily->data[0]->sunsetTime + (3600 * $data->offset);
 	$icon = $data->currently->icon;
 	$lights;
 	$weather;
 	$alerts = array();
 
-	if( ($localTime > $sunsetToday) && ($sunsetToday > -1800) )    
+	$period = periodOfDay($data);	// 0 for daytime, 1 for dusk, 2 for night, and 3 for dawn
+
+	if($period == 2)    
 	{
 		// Then it's nighttime, before dawn.  
 		$lights = "use lights (night)";
 	}
-	if($localTime  < ($sunriseToday + 1800))
+	if($period == 3)
 	{
 		// Then it's nighttime, after dusk.
-		$lights = "use lights (pre-dawn)";
+		$lights = "use lights (dawn)";
 	}
-	if(($localTime  < $sunsetToday) && ($localTime  > ($sunsetToday - 1800) ) )
+	if($period == 1)
 	{
 		$lights = "use lights (dusk)";
 	}
@@ -1093,13 +1121,18 @@ $output .= "<div id='container'>\n";
 						$output .= rotateArrow($windBearing);
 						$output .= "<b>Wind:" . round($windSpeed) . " " . speedUnits($units) . "  (" . compass($windBearing) . ")</b><br/>\n";
 
-					$output .= "<!--compass cell--></div>\n";	// Close compass cell
+					$output .= "<!--compass cell--></div>\n";
 
 					$output .= "<div class='topCell' id='bigConditions'>\n";
+
+						if( ($todayIcon == "cloudy") && (periodOfDay($json) != 0) ) 
+						{
+							$todayIcon = "cloudy-night";
+						}
+
 						$output .= "<!--Novacons Weather Icons, by Chet Design: digitalchet.deviantart.com/art/Novacons-Weather-Icons-13133337-->\n";
 						$output .= "<img src='graphics/icons/" . $todayIcon . ".png' alt='Current Weather: " . $todayIcon . "' id='weatherIcon' height='100' width='100'/><br/>";
 						$output .= "<p><b>Today's Conditions:</b> " . $currently . ".  " . $weeklyWeather[0][0] . "<br/>\n";
-
 
 					$output .= "<!--metascore cell--></div>\n";	
 
