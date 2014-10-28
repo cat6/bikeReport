@@ -15,6 +15,7 @@
                 html, body {
                     padding: 0;
                     margin: 0;
+                    background: #FAEBD7;
                 }
 
                 body {
@@ -28,6 +29,7 @@
                     margin-right: auto;
                     height: auto;
                     width: auto;
+                    background: #FAEBD7;
                 }
 
                 #header
@@ -153,12 +155,23 @@
                 }
 
                 #formBox {
-                    width: 400px;
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    margin-top: -50px;
-                    margin-left: -100px;  
+                    width: 250px;
+                    margin: 25px auto;
+                }
+
+                .inputTable {
+                    width: 100%;
+                    display: table;
+                }
+
+                .inputRow {
+                    display: table-row;
+                    width: 100%;
+                }
+
+                .inputCell {
+                    display: table-cell;
+                    width: 25%;
                 }
             </style>
 </head>
@@ -177,34 +190,75 @@
     <div id='formBox'>
 
     <form>
-        <label for='cityDropDown'>City: </label>
-        <select name="cityDropDown" id="cityDropDown">
-            <option value="toronto">Toronto</option>
-            <option value="new york">New York</option>
-            <option value="portland">Portland, OR</option>
-            <option value="hong kong">Hong Kong</option>
-            <option value="other">(other)</option>
-        </select>
-        <br/><br/>
-        <label for='cityInput'>Search: </label><input type="text" size="10" name="cityInput" id="cityInput"><br/>
-        <br/>
-         <label for='units'>Units: </label>
-        <select name="units" id="units">
-            <option value="CA">Canadian(km/C)</option>
-            <option value="US">USA(mi/F)</option>
-            <option value="UK">UK(mi/C)</option>
-        </select>
-        <br/><br/>
+        <div class='inputTable'>
 
-        <button type="button" id="checkButton" onclick="getCityData(this.form)">Check</button>
+        <div class='inputRow'>
+
+            <div class='inputCell'>
+                <label for='cityDropDown'>City: </label>
+            <!--inputCell--></div>
+
+            <div class='inputCell'>
+                <select name="cityDropDown" id="cityDropDown">
+                    <option value="toronto">Toronto</option>
+                    <option value="new york">New York</option>
+                    <option value="portland">Portland, OR</option>
+                    <option value="hong kong">Hong Kong</option>
+                    <option value="other">(other)</option>
+                </select>
+            <!--inputCell--></div>
+        <!--inputRow--></div>
+        <div class='inputRow'>
+            <div class='inputCell'>
+            OR
+            </div>
+            <div class='inputCell'>
+            </div>
+        </div>
+
+        <div class='inputRow'>
+
+            <div class='inputCell'>
+                <label for='cityInput'>Search: </label>
+            <!----></div>
+
+            <div class='inputCell'>
+                <input type="text" size="10" name="cityInput" id="cityInput"><br/>
+            <!--inputCell--></div>
+
+        <!--inputRow--></div>
+
+        <div class='inputRow'>
+
+            <div class='inputCell'>
+                <label for='units'>Units: </label>
+            <!--inputCell--></div>
+
+            <div class='inputCell'>
+                <select name="units" id="units">
+                    <option value="CA">Canadian(km/C)</option>
+                    <option value="US">USA(mi/F)</option>
+                    <option value="UK">UK(mi/C)</option>
+                </select>
+            <!--inputCell--></div>
+
+        <!--inputRow--></div>
+
+        <div class='inputRow'>
+            <div class='inputCell'>
+                <button type="button" id="checkButton" onclick="getCityData(this.form)">Get Report</button>
+            <!--inputCell--></div>
+        <!--inputRow--></div>
+
     </form>
+
+    <!--inputTable--></div>
 
     <div id="report"></div>
 
     <p id="userIP"></p>
 
     <script>
-
     function tellIP(ip) {
         var ipXML, ipURL, userLocation;
 
@@ -246,7 +300,7 @@
         ipLat = jsonArr.latitude;
         ipLng = jsonArr.longitude;
         ipLocality = jsonArr.region_name;
-        units = "CA";  
+        units = "CA";  // Hard-coded for now
 
         ipOutput = "Based upon your IP address (" + ip + "), you appear to be in " + ipCityName + ", " + ipCountry + ".<br/>  Would you like to get the report for " + ipCityName + "?<br/><br/>";
 
@@ -265,6 +319,7 @@
 
         ipOutput += "<input type=button onClick='ipReport(ipURL,this.form)' value='Get Report'>";
         ipOutput += "</form>";
+
 
         // Prompt the user to use IP geolocation to generate a report
         document.getElementById("userIP").innerHTML = ipOutput; 
@@ -305,7 +360,7 @@
                 if (cityXML.readyState == 4 && cityXML.status == 200) 
                 {
                     // Generates a list of cities with the name the user input
-                    candidates = parseCity(cityXML.responseText, cityName);
+                    candidates = parseCity(cityXML.responseText, cityName, units);
                 }
             }
             cityXML.open("GET", cityURL, true);
@@ -336,7 +391,7 @@
         }
     }
 
-    function parseCity(response, cityName) {
+    function parseCity(response, cityName, units) {
         // Parse response data and glean location data.  Accept only results that are valid cities and not place-names similar to cityName
         var jsonArr, i, j, output, lat, lng, cityFlag, cityCount, possibleCities, candidate;
         jsonArr = JSON.parse(response);
@@ -421,7 +476,7 @@
         // TESTING
         //report(output);
 
-        didYouMean(possibleCities);
+        didYouMean(possibleCities, units);
 
         return possibleCities;
     }
@@ -435,12 +490,12 @@
         window.location = url;
     }
 
-    function didYouMean(didYouMeanCities) {
+    function didYouMean(didYouMeanCities, units) {
         // Returns a single user-choosen city's data, given an array of cities.
         var validCityFlag, didYouMeanOutput, i, units;
 
         // ADJUST
-        units = "CA";
+        //units = "CA";
 
         validCityFlag = 0;
         didYouMeanOutput = "<p>Did you mean...?</p>";
@@ -484,6 +539,8 @@
         }
     }
     </script>
+
+    <!--inputTable--></div>
 
     <!--formBox-->
     </div>
