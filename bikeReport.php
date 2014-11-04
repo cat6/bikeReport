@@ -30,6 +30,13 @@ $weatherAPIKey = $weatherAPIKey[0];
 	Functions
 */
 
+function timeStamp($data)
+{
+	$currentTime = $data->currently->time;	// Unix time stamp for local time
+	$localTime = $currentTime + ($data->offset * 3600);	// Adjust time using hours offset
+	return gmdate('l F\ jS, g:ia', $localTime);	// Return a nice string
+}
+
 function periodOfDay($data)
 {
 	// returns 0 for daytime, 1 for dusk, 2 for night, and 3 for dawn
@@ -294,6 +301,23 @@ function startUntilBody($cityName, $lat, $lng)
 				color: #fff;
 				text-decoration: none;
 				border-right: 1px solid #fff;
+			}
+
+			#navDate, #navAlert 
+			{
+				text-decoration: none;
+				color: #fff;
+				float: left;
+				margin: 0;
+				padding: 0;
+				border-right: 1px solid #fff;
+				display: block;
+				padding: 5px 10px;
+			}
+
+			#navAlert 
+			{
+				color: yellow;
 			}
 
 			#navigation li a:hover { background: #5D8AA8; }
@@ -817,17 +841,7 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 	$reportOutput .= "<div class='summaryTable'>\n";
 		$reportOutput .= "<div class='summaryRow'>\n";
 			$reportOutput .= "<div class='summaryTitleCell'>\n";
-			$reportOutput .= "<p><b><h3>Weekly Summary: </b>" . $weeklySummary. "  ";
-
-			// Alerts
-			// [0]: light-related alert message, [1]: weather-related alert message
-			$todayAlerts = checkAlerts($json);
-
-			if($todayAlerts[0] != "")
-			{		
-				$reportOutput .= "<span id='alert'><b>Warning:</span> " . $todayAlerts[0] . "</b></p>";
-			}
-
+			$reportOutput .= "<p><b><h3>Weekly Summary: </b>" . $weeklySummary. "</p>";
 			$reportOutput .= "</div>\n";
 		$reportOutput .= "</div>\n";
 	$reportOutput .= "</div>\n";
@@ -884,7 +898,7 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 			$reportOutput .= "Feels like: " . round($week[$i][4][2]) . "&deg;" .  $unitChoices[1] . " / " . round($week[$i][4][3]) . "&deg;" .   $unitChoices[1] . "<br/>\n";
 			//$reportOutput .= "Icon: " . $week[$i][5] . "<br/>\n";
 
-			$reportOutput .= "Metascore: " . metascore($week[$i], $units, 1) . "&#37;\n";
+			$reportOutput .= "Overall: " . metascore($week[$i], $units, 1) . "&#37;\n";
 
 			$reportOutput .= "</p>\n";
 			if($i == 3)
@@ -1042,6 +1056,16 @@ $output .= "<div id='container'>\n";
 	$output .= "<!--header--></div>\n";
 	$output .= "<div id='navigation'>\n";
 	$output .= "<ul>\n";
+	$output .= "<li id='navDate'>" . timeStamp($json) . "</li>";
+
+	// Alerts
+	// [0]: light-related alert message, [1]: weather-related alert message
+	$todayAlerts = checkAlerts($json);
+	if($todayAlerts[0] != "")
+	{		
+		$output .= "<li id='navAlert'>Warning: " . $todayAlerts[0] . "</li>";
+	}
+
 	$output .= "<li><a href='http://www.brianneary.net/EXPERIMENTS/newBikeReport/bikeReport.html' title='Try Another City'>Try Another City</a></li>";
 	$output .= "<li><a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area'>Bike-friendly routes: " . $cityName . "</a></li></h3>\n";
 	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a></li>";
@@ -1074,7 +1098,7 @@ $output .= "<div id='container'>\n";
 
 						$output .= "<div class='topCell'  id='bigMeta'>\n";
 						$output .= "<h1>" . metascore($instantMeta, $units, 0) . "&#37; </h1>";
-						$output .= "<b>Metascore</b>\n";
+						$output .= "<b>Overall</b>\n";
 						$output .= "<!--topCell(meta)--></div>\n";
 
 
