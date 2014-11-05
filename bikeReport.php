@@ -25,10 +25,55 @@ $ini_array = parse_ini_file("bikereport.ini", true);
 
 $weatherAPIKey = explode(', ', $ini_array['api_keys']['weather']);
 $weatherAPIKey = $weatherAPIKey[0];
+$camAPIKey = explode(', ', $ini_array['api_keys']['cam']); 
+$camAPIKey = $camAPIKey[0];
 
 /*
 	Functions
 */
+
+function makeCamArray($data, $camAPIKey)
+{
+	// MAKE ENDPOINT URL
+	$lat = $data->latitude;
+	$lng = $data->longitude;
+
+	$endpointCam = "http://api.webcams.travel/rest?method=wct.webcams.list_nearby&lat=";
+	$endpointCam .= $lat;
+	$endpointCam .= "&lng=";
+	$endpointCam .= $lng;
+	$endpointCam .= "&devid=";
+	$endpointCam .= $camAPIKey;
+	$endpointCam .= "&format=json";
+
+	// setup curl to make a call to the endpoint
+	$session = curl_init($endpointCam);
+	// indicates that we want the response back
+	curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
+	// exec curl and get the data back
+	$camData = curl_exec($session);
+
+	// remember to close the curl session once we are finished retrieveing the data
+	curl_close($session);
+
+	// decode the json data to make it easier to parse the php
+	$jsonCam = json_decode($camData);
+	if ($search_results === NUL) die('Error parsing json');
+
+	$camArray = array();	// An array of webcam URLs for the given area
+	foreach ($jsonCam->webcams->webcam as $cam)
+	{
+		array_push($camArray, $cam->toenail_url);
+	}
+ /*	
+	// TESTING
+	foreach ($camArray as $cam)
+	{
+		print $cam . "\n";
+	}
+*/
+	return $camArray;
+}
 
 function timeStamp($data)
 {
@@ -1080,6 +1125,8 @@ $output .= "<div id='container'>\n";
 
 		// Report the week's weather
 		$weekAndGraph = reportWeekly($weeklyWeather, $units, $weeklyForecast, $json);
+
+		makeCamArray($json, $camAPIKey);
 
 		$output .= "<div id='left'>\n";
 		$output .= $weekAndGraph[0]; // Print out the graph code		
