@@ -886,7 +886,7 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 	$reportOutput .= "<div class='summaryTable'>\n";
 		$reportOutput .= "<div class='summaryRow'>\n";
 			$reportOutput .= "<div class='summaryTitleCell'>\n";
-			$reportOutput .= "<p><b><h3>Weekly Summary: </b>" . $weeklySummary. "</p>";
+			$reportOutput .= "<h3><b>Weekly Summary: </b>" . $weeklySummary. "</h3>";
 			$reportOutput .= "</div>\n";
 		$reportOutput .= "</div>\n";
 	$reportOutput .= "</div>\n";
@@ -960,6 +960,7 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 
 	    if($i == 7)
 		{
+			$reportOutput .= "<!-- PSA courtesy of: Bicycles Network Australia bicycles.net.au-->\n";
 			$reportOutput .= "<div class='summaryCell' id='psaImage' style='background-image: url(graphics/psa/clown.jpg); background-size: 70%; background-repeat:no-repeat; background-height:100%;'>\n";
 			//$reportOutput .= psaImage("clown.jpg", "Don't be a clown, tilt your lights down!");
 			$reportOutput .= "</div>\n";
@@ -1112,9 +1113,9 @@ $output .= "<div id='container'>\n";
 	}
 
 	$output .= "<li><a href='http://www.brianneary.net/EXPERIMENTS/newBikeReport/bikeReport.html' title='Try Another City'>Try Another City</a></li>";
-	$output .= "<li><a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area'>Bike-friendly routes: " . $cityName . "</a></li></h3>\n";
+	$output .= "<li><a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area'>Bike-friendly routes: " . $cityName . "</a></li>\n";
 	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a></li>";
-	$output .= "<li><a href=''/>Contact Webmaster</a></li>\n";
+	$output .= "<li><a href=''>Contact Webmaster</a></li>\n";
 	$output .= "</ul>";
 	$output .= "<!--navigation--></div>";
 
@@ -1213,7 +1214,7 @@ $output .= "<div id='container'>\n";
 
 		$output .= "<!--right--></div>\n";	
 
-		$output .= "<div style='clear: both;''></div>\n";
+		$output .= "<div style='clear: both;'></div>\n";
 
 		$output .= "<!--topContent--></div>\n";
 
