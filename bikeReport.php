@@ -58,18 +58,23 @@ function makeCamArray($data, $camAPIKey)
 
 	// decode the json data to make it easier to parse the php
 	$jsonCam = json_decode($camData);
-	if ($search_results === NUL) die('Error parsing json');
+	if($search_results === NUL) die('Error parsing json');
+
+	//var_dump($jsonCam);	// TEST
 
 	$camArray = array();	// An array of webcam URLs for the given area
-	foreach ($jsonCam->webcams->webcam as $cam)
+	for($i = 0; $i < 10; $i++)
 	{
-		array_push($camArray, $cam->toenail_url);
+		if($jsonCam->webcams->webcam[$i]->toenail_url != '')
+		{	
+			array_push($camArray, $jsonCam->webcams->webcam[$i]->toenail_url);
+		}
 	}
- /*	
+/*
 	// TESTING
 	foreach ($camArray as $cam)
 	{
-		print $cam . "\n";
+		print "test: " . $cam . "\n";
 	}
 */
 	return $camArray;
@@ -262,12 +267,40 @@ function startUntilBody($cityName, $lat, $lng)
 	 	<meta charset='UTF-8'>
 
 		<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+		<!-- Tiny Carousel for webcams-->
+		<script type='text/javascript' src='jquery/jquery.tinycarousel.min.js'></script>
 		<!-- Rotation script for arrow representing wind direction -->
 		<script type='text/javascript' src='http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js'></script>
 		<!-- Google line graph -->
 		<script type='text/javascript' src='https://www.google.com/jsapi'></script>
 
 		<link href='http://fonts.googleapis.com/css?family=Droid+Serif%7CCrimson+Text' rel='stylesheet' type='text/css'>
+		<link rel='stylesheet' href='css/tinycarousel.css' type='text/css' media='screen'/>
+
+		<script>
+			$(document).ready(function()
+				{
+					$('#slider1').tinycarousel({ 
+						interval: true
+					, 	bullets: true 
+					});
+						var slider1 = $('#slider1').data('plugin_tinycarousel');
+
+						    // The start method starts the interval.
+						    $('#startslider').click(function()
+						    {
+						        slider1.start();
+						        return false;
+						    });
+
+						    // The stop method stops the interval.
+						    $('#stopslider').click(function()
+						    {
+						        slider1.stop();
+						        return false;
+					});
+				});
+		</script>
 
 		<style type='text/css'>
 
@@ -478,6 +511,7 @@ function startUntilBody($cityName, $lat, $lng)
 			.summaryCell {
 				display: table-cell;
 				width: 25%;
+				overflow: hidden;
 			}
 
 			.miniCellTop {
@@ -870,7 +904,7 @@ function compass($degrees)
 	return $compdir;
 }
 
-function reportWeekly($week, $units, $weeklySummary, $json)
+function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 {
 	// Reports the contents of an associative array, $week, containing data about the following week's weather forecast.
 	// Assumes a properly formatted $week associative array.
@@ -882,8 +916,49 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 	$cityName = $_GET["cityName"];
 	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
 
+	// Look for webcams.  If any are in the area, then present a carousel.  Otherwise, present a psa message.
+	$camArray = makeCamArray($json, $camAPIKey);
 
 	$reportOutput .= "<div class='summaryTable'>\n";
+
+////////
+	if($camArray[0] != '')
+	{
+		$reportOutput .= "<div class='summaryRow'>\n";
+		$reportOutput .= "	<div class='titleCell'>
+								<div id='slider1'> 
+									<a class='buttons prev' href='#''>&lt;</a>
+									<div class='viewport'  style='";
+
+									if(sizeof($camArray) < 6)
+									{
+										$carouselWidth = (80/6) * sizeof($camArray); 
+									}
+									else
+									{
+										$carouselWidth = 80;
+									}
+
+									$reportOutput .= "width:" . $carouselWidth . "%'>";
+
+									$reportOutput .= "<ul class='overview'>";
+										for($i = 0; $i < 10; $i++)
+										{
+											if($camArray[$i] != '')
+											{
+												$reportOutput .= "<li><img src='" . $camArray[$i] . "' /></li>";
+											}
+										}
+										$reportOutput .= "
+										</ul>
+									</div>
+									<a class='buttons next' href='#'>&gt;</a>
+								</div>
+							</div>";
+		$reportOutput .= "</div>\n";
+	}
+/////////
+
 		$reportOutput .= "<div class='summaryRow'>\n";
 			$reportOutput .= "<div class='summaryTitleCell'>\n";
 			$reportOutput .= "<h3><b>Weekly Summary: </b>" . $weeklySummary. "</h3>";
@@ -960,10 +1035,9 @@ function reportWeekly($week, $units, $weeklySummary, $json)
 
 	    if($i == 7)
 		{
-			$reportOutput .= "<!-- PSA courtesy of: Bicycles Network Australia bicycles.net.au-->\n";
-			$reportOutput .= "<div class='summaryCell' id='psaImage' style='background-image: url(graphics/psa/clown.jpg); background-size: 70%; background-repeat:no-repeat; background-height:100%;'>\n";
-			//$reportOutput .= psaImage("clown.jpg", "Don't be a clown, tilt your lights down!");
-			$reportOutput .= "</div>\n";
+				$reportOutput .= "<!-- PSA courtesy of: Bicycles Network Australia bicycles.net.au-->\n";
+				$reportOutput .= "<div class='summaryCell' id='psaImage' style='background-image: url(graphics/psa/clown.jpg); background-size: 70%; background-repeat:no-repeat; background-height:100%;'>\n";
+				//$reportOutput .= psaImage("clown.jpg", "Don't be a clown, tilt your lights down!");
 		}
 
 		$today++;
@@ -1115,7 +1189,7 @@ $output .= "<div id='container'>\n";
 	$output .= "<li><a href='http://www.brianneary.net/EXPERIMENTS/newBikeReport/bikeReport.html' title='Try Another City'>Try Another City</a></li>";
 	$output .= "<li><a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area'>Bike-friendly routes: " . $cityName . "</a></li>\n";
 	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a></li>";
-	$output .= "<li><a href=''>Contact Webmaster</a></li>\n";
+	$output .= "<li><a href='mailto:webmaster@bikereport.net?Subject=BikeReport:" . $cityName . "'>Contact Webmaster</a></li>\n";
 	$output .= "</ul>";
 	$output .= "<!--navigation--></div>";
 
@@ -1125,9 +1199,9 @@ $output .= "<div id='container'>\n";
 	$output .= "<div id='topContent'>\n";
 
 		// Report the week's weather
-		$weekAndGraph = reportWeekly($weeklyWeather, $units, $weeklyForecast, $json);
+		$weekAndGraph = reportWeekly($weeklyWeather, $units, $weeklyForecast, $json, $camAPIKey);
 
-		makeCamArray($json, $camAPIKey);
+//		makeCamArray($json, $camAPIKey);
 
 		$output .= "<div id='left'>\n";
 		$output .= $weekAndGraph[0]; // Print out the graph code		
@@ -1191,7 +1265,7 @@ $output .= "<div id='container'>\n";
 					$output .= "<div class='topCell' id='bigCompass'>\n";
 
 						$output .= rotateArrow($windBearing);
-						$output .= "<b>Wind:" . round($windSpeed) . " " . speedUnits($units) . "  (" . compass($windBearing) . ")</b><br/>\n";
+						$output .= "<b>Wind: " . round($windSpeed) . " " . speedUnits($units) . "  (" . compass($windBearing) . ")</b><br/>\n";
 
 					$output .= "<!--compass cell--></div>\n";
 
