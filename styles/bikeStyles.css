@@ -1,0 +1,434 @@
+			html, body {
+   				padding: 0;
+     			margin: 0;
+     			height: 100%;
+			}
+
+			body {
+				background: #FAEBD7;
+				background-image: url("../graphics/crossBackgroundBlueDark.png");
+				background-repeat: repeat;
+				font-family: 'Droid Serif';
+				height: 100%;
+				min-height: 100%;
+			}
+
+            #formBox 
+            {
+                width: 250px;
+                margin: 25px auto;
+            }
+
+            button 
+            {
+            	color: white;
+            	background: #5D8AA8;;
+            	border: none;
+            	border: 1px rgba(0,0,0,0.9);
+            	text-shadow: 1px 1px 3px #666666;
+            }
+
+            .getReportButton
+            {
+            	width: 25%;
+            	height: 2em;
+            	font-size: 200%;
+            	-webkit-border-top-right-radius: 20px;
+				-webkit-border-bottom-left-radius: 20px;
+				-moz-border-radius-topright: 20px;
+				-moz-border-radius-bottomleft: 20px;
+				border-top-right-radius: 20px;
+				border-bottom-left-radius: 20px;
+            }
+
+            input[type=text] 
+            {
+  				border: 1px dotted #999;
+  				border-radius: 0;
+  				-webkit-appearance: none;
+  				font-size: 150%;
+			}
+			select
+			{
+				font-size: 150%;
+			}
+
+			#units
+			{
+				font-size: 100%;
+			}
+
+            .inputTable 
+            {
+                width: 100%;
+                display: table;
+            }
+
+            .inputRow 
+            {
+                display: table-row;
+                width: 100%;
+            }
+
+            .inputCell {
+                display: table-cell;
+                width: 25%;
+            }
+
+			#container
+			{
+				/*background: #72A0C1;*/
+				background-repeat: repeat;
+				position: relative;
+				width: 90%;
+				min-height: 100%;
+				margin-left: auto;
+				margin-right: auto;
+				overflow: hidden;
+			}
+
+			#header
+			{
+				color: #FAEBD7;
+				background: #5D8AA8;
+				font-family: 'Crimson Text', serif;
+				/* Stroking and shadow makes the title visible when it overlaps the map in the header */
+				webkit-text-stroke: 1px black;
+			   	text-shadow:
+			    	3px 3px 0 #000,
+			        -1px -1px 0 #000,  
+			    	1px -1px 0 #000,
+			        -1px 1px 0 #000,
+			    	1px 1px 0 #000;
+				/* Background-image tag is done inline to produce dynamic contents (e.g. a different map for each page) */
+				background-repeat: no-repeat;
+				background-attachment: fixed;
+				background-position: right top;
+				width: 100%;
+				min-height: 80px;
+				padding-left: 20px;
+			}
+
+			#header h1 { margin: 0; font-size: 250%;}
+
+			#navigation
+			{
+				float: right;
+				width: 100%;
+				background: #333;
+			}
+
+			#navigation ul
+			{
+				float: right;
+				margin: 0;
+				padding: 0;
+			}
+
+			#navigation ul li
+			{
+				list-style-type: none;
+				display: inline;
+			}
+
+			#navigation li a
+			{
+				display: block;
+				float: left;
+				padding: 5px 10px;
+				color: #fff;
+				text-decoration: none;
+				border-right: 1px solid #fff;
+			}
+
+			#navDate, #navAlert 
+			{
+				text-decoration: none;
+				color: #fff;
+				float: left;
+				margin: 0;
+				padding: 0;
+				border-right: 1px solid #fff;
+				display: block;
+				padding: 5px 10px;
+			}
+
+			#navAlert 
+			{
+				color: yellow;
+			}
+
+			#navigation li a:hover { background: #5D8AA8; }
+
+			#content
+			{
+				background: #72A0C1;
+				height: 100%;
+				width: 100%;
+				overflow: hidden;
+				min-height: 100%;
+			}
+
+			#content h2
+			{
+				color: #000;
+				font-size: 160%;
+				margin: 0 0 .5em;
+				width: 100%;
+			}
+
+			#topContent {
+				width: 100%;
+			}
+
+			#footer
+			{
+				background: #333;
+				color: #fff;
+				text-align: right;
+				height: 1%;
+				width: 100%;
+				min-height: 30px;
+				bottom: 0;
+			}
+
+			#left{
+			    width:40%;
+			    float:left;
+			}
+
+			#right{
+			    width:60%;
+			    float:right;
+			}
+
+			#slider1
+			{
+				width: 80%;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			#topContent
+			{
+				width: 90%;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			#weeklySummary
+			{
+				width: 80%;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			#weekly
+			{
+				width: 80%;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			#below{
+			}
+			
+			table
+			{ 
+				table-layout:fixed;
+				width: 100%;
+    			margin-left: auto;
+    			margin-right: auto;
+			}
+			
+			td, th {
+				vertical-align:top;
+			}
+			tr {
+				align: center;
+			}
+
+			#bigCompass {
+				text-align: center;
+				vertical-align: middle;
+				background: rgba(255, 255, 255, .2);				
+			}
+
+			#bigConditions {
+				text-align: center;
+				vertical-align: middle;
+				background: rgba(255, 255, 255, .5);
+			}
+
+			#bigConditions h1 { font-size: 250%; }
+
+			#bigMetaTherm {
+				height: 100%;
+			}
+
+			#bigTemperature {
+				text-align: center;
+				vertical-align: middle;
+				background: rgba(255, 255, 255, .5);
+			}
+
+			#bigTemperature h1 { font-size: 250%; }
+
+			#bigMeta {
+				text-align: center;
+				vertical-align: middle;
+				background: rgba(255, 255, 255, .2);
+			}
+
+			#bigMeta h1 { font-size: 250%; }
+
+			#compassTitle {
+				text-align: top;
+				color: 'red';
+			}
+
+			.summaryTable {
+				width: 100%;
+				display: table;
+			}
+
+			.summaryRow {
+				display: table-row;
+				width: 100%;
+			}
+
+			.summaryCell {
+				display: table-cell;
+				width: 25%;
+				overflow: hidden;
+			}
+
+			.dayCell {
+				display: table-cell;
+				width: 14%;
+				height: 250px;
+				background: rgba(255, 255, 255, .2);
+				border: 2px, solid;
+				border-color: white;
+			}
+
+			.miniCellTop {
+				display: table-cell;
+				width: 50%;	
+
+				text-align: center;
+				vertical-align: middle;
+			}
+
+			.miniCellBottom {
+				display: table-cell;
+				width: 50%;	
+
+				text-align: center;
+				vertical-align: middle;
+			}
+
+			.summaryTitleCell {
+				width: 100%;
+			}
+
+			.spacer {
+				vertical-align: middle;
+
+				text-align: center;
+			}
+
+			.topTable {
+				width: 100%;
+				display: table;
+			}
+
+			.topRow {
+				display: table-row;
+				width: 100%;
+			}
+
+			.topCell {
+				display: table-cell;
+				width: 25%;
+			}
+
+			#alert {
+				color: yellow;
+				margin-left: 10em;
+			}
+
+			/* Thermometer */
+
+			.thermometer {
+			    margin-left: 35%;
+			}
+			.thermometer {
+			    width:40px;
+			    height:100px;
+			    position: relative;
+			    background: #ddd;
+			    border:1px solid #aaa;
+			    -webkit-border-radius: 12px;
+			       -moz-border-radius: 12px;
+			        -ms-border-radius: 12px;
+			         -o-border-radius: 12px;
+			            border-radius: 12px;
+
+			    -webkit-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			       -moz-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			        -ms-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			         -o-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			            box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+			}
+
+			.thermometer .track {
+			    height:80px;
+			    top:10px;
+			    width:20px;
+			    border: 1px solid #aaa;
+			    position: relative;
+			    margin:0 auto;
+			    background: rgb(255,255,255);
+			    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgb(0,0,0)), color-stop(1%,rgb(255,255,255)));
+			    background: -webkit-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background:      -o-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background:     -ms-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background:    -moz-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background:   linear-gradient(to bottom, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
+			    background-position: 0 -1px;
+			    background-size: 100% 5%;
+			}
+
+			.thermometer .progress {
+			    height:0%;
+			    width:100%;
+			    background: rgb(20,100,20);
+			    background: rgba(255,0,0,0.9);
+			    position: absolute;
+			    bottom:0;
+			    left:0;
+			}
+
+			.thermometer .goal {
+			    position:absolute;
+			    top:0;
+			    visibility: hidden;
+			}
+
+			.thermometer .amount {
+			    display: inline-block;
+			    padding:0 5px 0 60px;
+			    border-top:1px solid black;
+			    font-family: Trebuchet MS;
+			    font-weight: bold;
+			    color:#333;
+			}
+
+			.thermometer .progress .amount {
+			    padding:0 35px 0 5px;
+			    position: absolute;
+			    border-top:1px solid 'black';
+			    color:'black';
+			    right:0;
+			}

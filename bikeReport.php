@@ -27,10 +27,39 @@ $weatherAPIKey = explode(', ', $ini_array['api_keys']['weather']);
 $weatherAPIKey = $weatherAPIKey[0];
 $camAPIKey = explode(', ', $ini_array['api_keys']['cam']); 
 $camAPIKey = $camAPIKey[0];
+$radarKey = explode(', ', $ini_array['api_keys']['radar']);
+$radarKey = $radarKey[0];
 
 /*
 	Functions
 */
+
+function getRadarMap($radarKey, $lat, $lng)
+{
+	// Provides a radar
+	$radarHeight = 400;
+	$radarWidth = 600;
+
+	$radius = 100;
+
+	$radarURL = "http://api.wunderground.com/api/";
+	$radarURL .= $radarKey;
+	$radarURL .= "/radar/image.gif?centerlat=" . $lat;
+	$radarURL .= "&#38;centerlong=" . $lng;
+	$radarURL .= "&radius=" . $radius;
+	$radarURL .= "&width=" . $radarWidth;
+	$radarURL .= "&height=" . $radarHeight;
+	$radarURL .= "&newmaps=1";
+
+// Provides a map 
+	$radarURL = "http://api.wunderground.com/api/" . $radarKey . "/radar/image.gif?centerlat=" . $lat . ";centerlon=" . $lng . "&radius=100&width=280&height=280&newmaps=1";
+
+$radarURL = "http://api.wunderground.com/api/" . $radarKey . "/radar/image.gif?centerlat=" . $lat . "&centerlon=" . $lng . "&radius=20&width=280&height=280&newmaps=1";
+
+
+
+	return $radarURL;
+}
 
 function makeCamArray($data, $camAPIKey)
 {
@@ -45,6 +74,9 @@ function makeCamArray($data, $camAPIKey)
 	$endpointCam .= "&devid=";
 	$endpointCam .= $camAPIKey;
 	$endpointCam .= "&format=json";
+
+	// menu: lat/lng: 28.331 / 80.6131
+	// search: lat/lng: 28.3200067 / -80.6075513
 
 	// setup curl to make a call to the endpoint
 	$session = curl_init($endpointCam);
@@ -275,10 +307,13 @@ function startUntilBody($cityName, $lat, $lng)
 		<script type='text/javascript' src='https://www.google.com/jsapi'></script>
 
 		<link href='http://fonts.googleapis.com/css?family=Droid+Serif%7CCrimson+Text' rel='stylesheet' type='text/css'>
-		<link rel='stylesheet' href='css/tinycarousel.css' type='text/css' media='screen'/>
+		<link rel='stylesheet' href='styles/tinycarousel.css' type='text/css' media='screen'/>
+
+		<!--Main CSS-->
+		<link rel='stylesheet' href='styles/bikeStyles.css' type='text/css' media='screen' /> 
 
 		<script>
-			$(document).ready(function()
+			$(window).load(function()
 				{
 					$('#slider1').tinycarousel({ 
 						interval: true
@@ -301,339 +336,7 @@ function startUntilBody($cityName, $lat, $lng)
 					});
 				});
 		</script>
-
-		<style type='text/css'>
-
-			html, body {
-   				padding: 0;
-     			margin: 0;
-     			height: 100%;
-			}
-
-			body {
-				background: #FAEBD7;
-				font-family: 'Droid Serif';
-			}
-
-			#container
-			{
-				background: #72A0C1;
-				margin-left: auto;
-				margin-right: auto;
-
-				width: auto;
-				min-height: 100%;
-			}
-
-			#header
-			{
-				color: #FAEBD7;
-				background: #5D8AA8;
-				padding: 20px;
-				font-family: 'Crimson Text', serif;
-				/* Stroking and shadow makes the title visible when it overlaps the map in the header */
-				webkit-text-stroke: 1px black;
-			   	text-shadow:
-			    	3px 3px 0 #000,
-			        -1px -1px 0 #000,  
-			    	1px -1px 0 #000,
-			        -1px 1px 0 #000,
-			    	1px 1px 0 #000;
-				";
-
-	$startUntilBodyOutput .= "background-image: url('https://maps.googleapis.com/maps/api/staticmap?center=" . ($lat - 0.12) . "," . $lng . "&zoom=11&size=600x600');";
-
-	$startUntilBodyOutput .= "
-				background-repeat: no-repeat;
-				background-attachment: fixed;
-				background-position: right top;
-			}
-
-			#header h1 { margin: 0; font-size: 250%;}
-
-			#navigation
-			{
-				float: right;
-				width: 100%;
-				background: #333;
-			}
-
-			#navigation ul
-			{
-				float: right;
-				margin: 0;
-				padding: 0;
-			}
-
-			#navigation ul li
-			{
-				list-style-type: none;
-				display: inline;
-			}
-
-			#navigation li a
-			{
-				display: block;
-				float: left;
-				padding: 5px 10px;
-				color: #fff;
-				text-decoration: none;
-				border-right: 1px solid #fff;
-			}
-
-			#navDate, #navAlert 
-			{
-				text-decoration: none;
-				color: #fff;
-				float: left;
-				margin: 0;
-				padding: 0;
-				border-right: 1px solid #fff;
-				display: block;
-				padding: 5px 10px;
-			}
-
-			#navAlert 
-			{
-				color: yellow;
-			}
-
-			#navigation li a:hover { background: #5D8AA8; }
-
-			#content
-			{
-				background: #72A0C1;
-				height: 100%;
-				overflow: hidden;
-				min-height: 100%;
-				padding-left: 10px;
-				padding-right: 10px;
-			}
-
-			#content h2
-			{
-				color: #000;
-				font-size: 160%;
-				margin: 0 0 .5em;
-			}
-
-			#topContent {
-				width: 100%;
-			}
-
-			#footer
-			{
-				background: #333;
-				color: #fff;
-				text-align: right;
-				padding: 20px;
-				height: 1%;
-
-			}
-
-			#left{
-			    width:40%;
-			    float:left;
-			}
-
-			#right{
-			    width:60%;
-			    float:right;
-			}
-
-			#below{
-			}
-			
-			table
-			{ 
-				table-layout:fixed;
-				width: 100%;
-    			margin-left: auto;
-    			margin-right: auto;
-			}
-			
-			td, th {
-				vertical-align:top;
-			}
-			tr {
-				align: center;
-			}
-
-			#bigCompass {
-				text-align: center;
-				vertical-align: middle;
-				background: rgba(255, 255, 255, .2);				
-			}
-
-			#bigConditions {
-				text-align: center;
-				vertical-align: middle;
-				background: rgba(255, 255, 255, .5);
-			}
-
-			#bigConditions h1 { font-size: 250%; }
-
-			#bigMetaTherm {
-				height: 100%;
-			}
-
-			#bigTemperature {
-				text-align: center;
-				vertical-align: middle;
-				background: rgba(255, 255, 255, .5);
-			}
-
-			#bigTemperature h1 { font-size: 250%; }
-
-			#bigMeta {
-				text-align: center;
-				vertical-align: middle;
-				background: rgba(255, 255, 255, .2);
-			}
-
-			#bigMeta h1 { font-size: 250%; }
-
-			#compassTitle {
-				text-align: top;
-				color: 'red';
-			}
-
-			.summaryTable {
-				width: 100%;
-				display: table;
-			}
-
-			.summaryRow {
-				display: table-row;
-				width: 100%;
-			}
-
-			.summaryCell {
-				display: table-cell;
-				width: 25%;
-				overflow: hidden;
-			}
-
-			.miniCellTop {
-				display: table-cell;
-				width: 50%;	
-
-				text-align: center;
-				vertical-align: middle;
-			}
-
-			.miniCellBottom {
-				display: table-cell;
-				width: 50%;	
-
-				text-align: center;
-				vertical-align: middle;
-			}
-
-			.summaryTitleCell {
-				width: 100%;
-			}
-
-			.topTable {
-				width: 100%;
-				display: table;
-			}
-
-			.topRow {
-				display: table-row;
-				width: 100%;
-			}
-
-			.topCell {
-				display: table-cell;
-				width: 25%;
-			}
-
-			#alert {
-				color: yellow;
-				margin-left: 10em;
-			}
-
-			/* Thermometer */
-
-			.thermometer {
-			    margin-left: 35%;
-			}
-			.thermometer {
-			    width:40px;
-			    height:100px;
-			    position: relative;
-			    background: #ddd;
-			    border:1px solid #aaa;
-			    -webkit-border-radius: 12px;
-			       -moz-border-radius: 12px;
-			        -ms-border-radius: 12px;
-			         -o-border-radius: 12px;
-			            border-radius: 12px;
-
-			    -webkit-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
-			       -moz-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
-			        -ms-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
-			         -o-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
-			            box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
-			}
-
-			.thermometer .track {
-			    height:80px;
-			    top:10px;
-			    width:20px;
-			    border: 1px solid #aaa;
-			    position: relative;
-			    margin:0 auto;
-			    background: rgb(255,255,255);
-			    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgb(0,0,0)), color-stop(1%,rgb(255,255,255)));
-			    background: -webkit-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
-			    background:      -o-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
-			    background:     -ms-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
-			    background:    -moz-linear-gradient(top, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
-			    background:   linear-gradient(to bottom, rgb(0,0,0) 0%,rgb(255,255,255) 10%);
-			    background-position: 0 -1px;
-			    background-size: 100% 5%;
-			}
-
-			.thermometer .progress {
-			    height:0%;
-			    width:100%;
-			    background: rgb(20,100,20);
-			    background: rgba(255,0,0,0.9);
-			    position: absolute;
-			    bottom:0;
-			    left:0;
-			}
-
-			.thermometer .goal {
-			    position:absolute;
-			    top:0;
-			    visibility: hidden;
-			}
-
-			.thermometer .amount {
-			    display: inline-block;
-			    padding:0 5px 0 60px;
-			    border-top:1px solid black;
-			    font-family: Trebuchet MS;
-			    font-weight: bold;
-			    color:#333;
-			}
-
-			.thermometer .progress .amount {
-			    padding:0 35px 0 5px;
-			    position: absolute;
-			    border-top:1px solid 'black';
-			    color:'black';
-			    right:0;
-			}
-
-
-		</style>
-	</head>
-	<body>
-	";
+";
 	return $startUntilBodyOutput;
 }
 
@@ -794,6 +497,21 @@ function metascore($day, $units, $metaFlag)
 	// Depending upon $metaFlag, analyzes either instantaneous readings ($metaFlag == 0) or
 	// analyzes a later day's conditons from an associative array. 
 
+	// Update notes: will change $day to $json object, and $metaFlag to $interval
+	// If( gettype($interval) == 'integer')
+	// {
+	//    If ($interval == 0), give an instantaneous analysis, 
+	//    elseif ($interval > 0 && $interval <= 7), and give a reading for that day in the list.  $json->daily->data[$interval-1] has data for each of the next 7 days
+	//    else, throw an out-of-bounds exception
+	// }
+	// if( gettype($interval) == 'string'), than its a string
+		// if($interval[0] == 'h'), than assume it's a string starting with "h" + X (e.g. "h4"), do an hourly reading for 4 hours ahead, if possible.  If the reminder of the string is invalid, throw an exception.
+		//  - $json->hourly->data[$i] has data for each of the next 48(?) hours
+		//	- $json->hourly->data[intval(substr($interval, 1))]  should get the hourly data corresponding to the integer value of the input from the 2nd digit onwards. 
+
+	// Subtract 5% if dawn/dusk, and 15% if it's nighttime.  Pass in $json to periodOfDay.
+
+
 	// $day if instantaneous: [0]: windspeed, [1]: temperature, [2]: $icon
 	if($metaFlag == 0)
 	{
@@ -921,25 +639,28 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 
 	$reportOutput .= "<div class='summaryTable'>\n";
 
-////////
 	if($camArray[0] != '')
 	{
 		$reportOutput .= "<div class='summaryRow'>\n";
 		$reportOutput .= "	<div class='titleCell'>
-								<div id='slider1'> 
-									<a class='buttons prev' href='#''>&lt;</a>
-									<div class='viewport'  style='";
+								<div id='slider1'> ";
+								if(sizeof($camArray) < 5)
+								{
+									$reportOutput .= 		"   <a class='buttons prev' href='#''>&lt;</a>";
+								}
+		$reportOutput .=        "	<div class='viewport'  style='";
 
-									if(sizeof($camArray) < 6)
+									if(sizeof($camArray) < 7)
 									{
-										$carouselWidth = (80/6) * sizeof($camArray); 
+										$carouselWidth = (184 + 20) * sizeof($camArray); // width of a pic is 184, + 20px padding
+										$carouselWidth = "$carouselWidth";
 									}
 									else
 									{
-										$carouselWidth = 80;
+										$carouselWidth = 5 * (184 + 20);// "80%";
 									}
 
-									$reportOutput .= "width:" . $carouselWidth . "%'>";
+									$reportOutput .= "width:" . $carouselWidth . "px;'>";
 
 									$reportOutput .= "<ul class='overview'>";
 										for($i = 0; $i < 10; $i++)
@@ -951,22 +672,25 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 										}
 										$reportOutput .= "
 										</ul>
-									</div>
-									<a class='buttons next' href='#'>&gt;</a>
-								</div>
+									</div>";
+								if(sizeof($camArray) < 5)
+								{
+									$reportOutput .= "<a class='buttons next' href='#'>&gt;</a>";
+								}
+
+				$reportOutput .= "</div>
 							</div>";
 		$reportOutput .= "</div>\n";
 	}
-/////////
 
 		$reportOutput .= "<div class='summaryRow'>\n";
-			$reportOutput .= "<div class='summaryTitleCell'>\n";
+			$reportOutput .= "<div class='summaryTitleCell' id='weeklySummary'>\n";
 			$reportOutput .= "<h3><b>Weekly Summary: </b>" . $weeklySummary. "</h3>";
 			$reportOutput .= "</div>\n";
 		$reportOutput .= "</div>\n";
 	$reportOutput .= "</div>\n";
 
-	$reportOutput .= "<div class='summaryTable'>\n";
+	$reportOutput .= "<div class='summaryTable' id='weekly'>\n";
 
 	$metaArray = array();
 	array_push($metaArray, $today);	// First element will indicate the starting day for the chart.
@@ -1171,7 +895,7 @@ $output .= "<div id='container'>\n";
 
 
 	// Header
-	$output .= "<div id='header'>\n";
+	$output .= "<div id='header' style='background-image: url(https://maps.googleapis.com/maps/api/staticmap?center=" . ($lat - 0.12) . "," . $lng . "&zoom=11&size=600x600);'>\n";
 	$output .= "<h1>Bike Report: " . $cityName . "</h1>\n";
 	$output .= "<!--header--></div>\n";
 	$output .= "<div id='navigation'>\n";
@@ -1187,6 +911,9 @@ $output .= "<div id='container'>\n";
 	}
 
 	$output .= "<li><a href='http://www.brianneary.net/EXPERIMENTS/newBikeReport/bikeReport.html' title='Try Another City'>Try Another City</a></li>";
+
+//	$output .= "<li><a target='_blank' href='" . getRadarMap($radarKey, $json->latitude, $json->longitude) . "' title='Radar'>Radar</a></li>"; // Weather radar map.
+
 	$output .= "<li><a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area'>Bike-friendly routes: " . $cityName . "</a></li>\n";
 	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a></li>";
 	$output .= "<li><a href='mailto:webmaster@bikereport.net?Subject=BikeReport:" . $cityName . "'>Contact Webmaster</a></li>\n";
@@ -1306,6 +1033,7 @@ $output .= "<div id='container'>\n";
 	$output .= "<!--content--></div>\n";
 
 	$output .= "<div id='footer'>\n";
+	$output .= "<a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a>";
 	$output .= "Copyright 2014";
 	$output .= "<!--footer--></div>\n";
 
