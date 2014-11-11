@@ -13,12 +13,6 @@
 				min-height: 100%;
 			}
 
-            #formBox 
-            {
-                width: 250px;
-                margin: 25px auto;
-            }
-
             button 
             {
             	color: white;
@@ -33,12 +27,7 @@
             	width: 25%;
             	height: 2em;
             	font-size: 200%;
-            	-webkit-border-top-right-radius: 20px;
-				-webkit-border-bottom-left-radius: 20px;
-				-moz-border-radius-topright: 20px;
-				-moz-border-radius-bottomleft: 20px;
-				border-top-right-radius: 20px;
-				border-bottom-left-radius: 20px;
+
             }
 
             input[type=text] 
@@ -48,6 +37,14 @@
   				-webkit-appearance: none;
   				font-size: 150%;
 			}
+
+			input:focus,
+			select:focus,
+			textarea:focus,
+			button:focus {
+    			outline: none;
+			}
+
 			select
 			{
 				font-size: 150%;
@@ -57,18 +54,6 @@
 			{
 				font-size: 100%;
 			}
-
-            .inputTable 
-            {
-                width: 100%;
-                display: table;
-            }
-
-            .inputRow 
-            {
-                display: table-row;
-                width: 100%;
-            }
 
             .inputCell {
                 display: table-cell;
@@ -116,6 +101,17 @@
 				float: right;
 				width: 100%;
 				background: #333;
+			}
+
+			#footer
+			{
+				background: #333;
+				color: #fff;
+				text-align: right;
+				height: 1%;
+				width: 100%;
+				min-height: 30px;
+				bottom: 0;
 			}
 
 			#navigation ul
@@ -179,17 +175,6 @@
 
 			#topContent {
 				width: 100%;
-			}
-
-			#footer
-			{
-				background: #333;
-				color: #fff;
-				text-align: right;
-				height: 1%;
-				width: 100%;
-				min-height: 30px;
-				bottom: 0;
 			}
 
 			#left{
@@ -308,8 +293,15 @@
 				width: 14%;
 				height: 250px;
 				background: rgba(255, 255, 255, .2);
-				border: 2px, solid;
-				border-color: white;
+
+				border: 3px solid white;
+
+            	-webkit-border-top-right-radius: 20px;
+				-webkit-border-bottom-left-radius: 20px;
+				-moz-border-radius-topright: 20px;
+				-moz-border-radius-bottomleft: 20px;
+				border-top-right-radius: 20px;
+				border-bottom-left-radius: 20px;
 			}
 
 			.miniCellTop {

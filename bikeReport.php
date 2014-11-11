@@ -116,7 +116,7 @@ function timeStamp($data)
 {
 	$currentTime = $data->currently->time;	// Unix time stamp for local time
 	$localTime = $currentTime + ($data->offset * 3600);	// Adjust time using hours offset
-	return gmdate('l F\ jS, g:ia', $localTime);	// Return a nice string
+	return gmdate('D M\ jS, g:ia', $localTime);	// Return a nice string
 }
 
 function periodOfDay($data)
@@ -629,6 +629,7 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 	$reportOutput;
 
 	$weekdays = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+	$weekdaysShort = array("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
 	$unixDay = mktime();
 	$today = date('N', $unixDay); // Returns 1-7
 	$cityName = $_GET["cityName"];
@@ -692,6 +693,7 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 
 	$reportOutput .= "<div class='summaryTable' id='weekly'>\n";
 
+	// Make the metascore graph
 	$metaArray = array();
 	array_push($metaArray, $today);	// First element will indicate the starting day for the chart.
 
@@ -701,7 +703,8 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 	}		
 
 	$graphData = makeGraph($metaArray);
-
+/*
+	// Weather output for each day of the coming week
 	$reportOutput .= "<div class='summaryRow'>\n";
 	$firstDayFlag = 1;
 
@@ -735,7 +738,7 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 				$reportOutput .= "<b><i>" . $weekdays[$today - 7] . "</i></b>:<br/>";	// Weekday
 			}
 
-		$reportOutput .= $week[$i][0] . "<br/>";	// This day's summary
+			$reportOutput .= $week[$i][0] . "<br/>";	// This day's summary
 			$reportOutput .= "Wind speed/bearing: " . round($week[$i][1]) . " " . $unitChoices[2] . " / " . $week[$i][2] . "&deg;<br/>\n";
 			$reportOutput .= "P.O.P.: " . ($week[$i][3][2] * 100) . " &#37;<br/>\n";
 			$reportOutput .= "Temperature min/max: " . round($week[$i][4][0]) . "&deg;" . $unitChoices[1] . " / " . round($week[$i][4][1]) . "&deg;" . $unitChoices[1] . "<br/>\n"; 
@@ -770,7 +773,42 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 	$reportOutput .= "</div>\n";	// Close off the last row
 	$reportOutput .= "</div>\n";	// Close off the "table"
 
+*/
+	// Weekly weather report output
+	$today = date('N', $unixDay); // Returns 1-7
+
+	$reportOutput .= "<div class='summaryTable'>\n";
+	$reportOutput .= "<div class='summaryRow' style='text-align: center;'>\n";
+	for($i = 0; $i <= 6; $i++)
+	{
+		$reportOutput .= "<div class='dayCell'>";
+			if($today <= 6)
+			{
+				$reportOutput .= "<b>" . $weekdaysShort[$today] . ": </b>" .  metascore($week[$i], $units, 1) . "%<br/>\n";	// weekday
+			}
+			else
+			{
+				$reportOutput .= "<b>" . $weekdaysShort[$today - 7] . ": </b>" .  metascore($week[$i], $units, 1) . "%<br/>\n";	// weekday
+			}
+			// $reportOutput2 .= // image tag corresponding to icon: $week[$i][5], sized small   . "<br/>\n";
+			// Can set width = 100% for icon, but how to proportionately set the height?  Set the image itself to 50%(?) of its original size
+			// Original size 256x256
+			$reportOutput .= "<img src='graphics/icons/" . $week[$i][5] . ".png' alt='Current Weather: " . $week[$i][5] . "' height='50' width='50'/><br/>";
+			$reportOutput .= round($week[$i][4][1]) . "&deg;" . $unitChoices[1] . " Max<br/>\n";
+			$reportOutput .= round($week[$i][4][0]) . "&deg;" . $unitChoices[1] . " Min<br/>\n";
+			$reportOutput .= round($week[$i][1]) . " " . $unitChoices[2] . " / " . compass($week[$i][2]) . "<br/>\n";
+			$reportOutput .=  $week[$i][0] . "<br/>\n";
+		$reportOutput .= "</div><!--dayCell-->\n";
+		$today++;
+	}
+	$reportOutput .= "</div><!--summaryRow-->\n";
+	$reportOutput .= "</div><!--summaryTable-->\n";
+
 	$ret = array();
+
+	//array_push($ret, $graphData, $reportOutput2);
+
+
 	array_push($ret, $graphData, $reportOutput);
 
 	return $ret;
@@ -915,8 +953,8 @@ $output .= "<div id='container'>\n";
 //	$output .= "<li><a target='_blank' href='" . getRadarMap($radarKey, $json->latitude, $json->longitude) . "' title='Radar'>Radar</a></li>"; // Weather radar map.
 
 	$output .= "<li><a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area'>Bike-friendly routes: " . $cityName . "</a></li>\n";
-	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a></li>";
-	$output .= "<li><a href='mailto:webmaster@bikereport.net?Subject=BikeReport:" . $cityName . "'>Contact Webmaster</a></li>\n";
+	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark</a></li>";
+	$output .= "<li><a href='mailto:webmaster@bikereport.net?Subject=BikeReport:" . $cityName . "'>Contact</a></li>\n";
 	$output .= "</ul>";
 	$output .= "<!--navigation--></div>";
 
@@ -1033,7 +1071,7 @@ $output .= "<div id='container'>\n";
 	$output .= "<!--content--></div>\n";
 
 	$output .= "<div id='footer'>\n";
-	$output .= "<a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a>";
+	//$output .= "<a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a>";
 	$output .= "Copyright 2014";
 	$output .= "<!--footer--></div>\n";
 
