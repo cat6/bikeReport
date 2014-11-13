@@ -11,6 +11,8 @@ $country = $_GET["country"];
 $lat = $_GET["lat"];
 $lng = $_GET["lng"];
 $units = $_GET["units"];
+$oneway = $_GET["oneway"];
+$onewayCompass = $_GET["compass"]; 
 
 // Scrub variables 
 $cityName = clean($cityName);
@@ -19,6 +21,9 @@ $country = clean($country);
 $lat = clean($lat);
 $lng = clean($lng);
 $units = clean($units);
+
+// Import metascore functionality
+require_once("meta.php");
 
 // Acquire API credentials from an ini file.
 $ini_array = parse_ini_file("bikereport.ini", true);
@@ -33,6 +38,50 @@ $radarKey = $radarKey[0];
 /*
 	Functions
 */
+
+function makeHourlyReport($json, $units, $hoursToReport)
+{
+	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
+	$output = "";
+
+	// Summary for the next few hours
+	$output .= "<div class='summaryTable' id='dailyTitle'>\n";
+
+	$output .= "<div class='summaryRow' style='width: 80%;'>\n";
+	$output .= "<div class='summaryTitleCell' id='dailySummary'>\n";
+	$output .= "<h3><b>In the next few hours:  " . $json->hourly->summary . "</b></h3>\n";
+	$output .= "</div><!--hourly summary dayCell-->\n";
+	$output .= "</div><!--hourly summary summaryRow-->\n";
+	$output .= "</div><!--hourly summary summaryTable-->\n";
+
+	$output .= "<div class='summaryTable' id='daily'>\n";
+	$output .= "<div class='summaryRow' style='width: 80%'>\n";
+
+	foreach($hoursToReport as $hour)
+	{
+		$output .= "<div class='hourCell' style='padding: 10px;'>\n";
+		$output .= "<h2>" . $hour . "</h2>" . " hours from now: ";
+
+		//metascore
+		$output .= "<h2>" . meta($json, $units, "h{$hour}") . "%</h2><br/><br/>\n";
+
+		$output .= "<img src='graphics/icons/" . $json->hourly->data[$hour]->icon . ".png' alt='" . $hour . " hours from now: " . $json->hourly->data[$hour]->icon . "' id='weatherIcon' height='50' width='50'/><br/>";
+
+		$output .= "<i>" . $json->hourly->data[$hour]->summary . "</i><br/>\n";
+
+		$output .= "<h4>Temp: " . round($json->hourly->data[$hour]->temperature) . $unitChoices[1] . "&deg;</h4>\n";
+		$output .= "<h4>Feels like: " . round($json->hourly->data[$hour]->apparentTemperature) . $unitChoices[1] . "&deg;</h4>\n";
+		$output .= "<h4>Wind: " . round($json->hourly->data[$hour]->windSpeed) . 	$unitChoices[2] . " / " . compass($json->hourly->data[$hour]->windBearing) . "</h4>";
+
+		$output .= "</div><!--day dayCell-->\n";
+	}
+
+	$output .= "</div><!--day summaryRow-->\n";
+	$output .= "</div><!--day summaryTable-->\n";
+	$output .= "<br/><br/>\n";
+
+	return $output;
+}
 
 function getRadarMap($radarKey, $lat, $lng)
 {
@@ -128,23 +177,76 @@ function periodOfDay($data)
 
 	$ret = 0;	// Default; daytime.
 
-	if( ($localTime > $sunsetToday) && ($sunsetToday > -1800) )    
+	// daytime: local/rise/set: 1415 799469 / -18000 / 1415 811422
+	// rise is negative, set is ahead
+
+	// unit test data
+	// local / sunrise / sunset / ret
+
+	// Day: sunrise is negative (or zero?) and sunset > local
+	// day (1:54pm - toronto)
+	// 1415800456 / -18000 / 1415811422 / 0
+	// day (8:58am - Honolulu)
+ 	// 1415782712 / -36000 / 1415814720 / 0
+
+	// night: either both are positive, OR sunrise is 0??
+	// night (6:52pm - london)
+	// 1415818378 / 0 / 1415809043 / -1 
+	// night (3:48am-tokyo)
+	// 1415850538 / 32400 / 1415896665 / 2 
+
+	// dawn: 
+
+	// Dusk: (local < sunset) && ((local + 30 mins) > sunset)
+
+	// 9:16am in apia island
+	// 1415 870184 / 50400 / 1415 907259 / 2
+
+	// dawn? - (palikir island - 6:14am)
+	//1415859283 / 39600 / 1415902051 / 2
+
+	// Two circumstances it could be night.  Before midnight, both sunrise and sunset are behind us
+	// After midnight, both sunrise and sunset are ahead of us
+	if($sunriseToday < 0 && $sunsetToday > 0)
+	{
+		// Day.  Sunrise is a large negative, like -18000.
+		$ret = 0;
+	}
+ 	elseif((($localtime < $sunriseToday) && ($localtime < $sunsetToday)) || (($localTime > $sunsetToday) && ($localtime > $sunsetToday))  )
 	{
 		// Night
 		$ret = 2;
 	}
-	if($localTime  < ($sunriseToday + 1800))
+	elseif($localTime  < ($sunriseToday + 1800))
 	{
 		// Dawn
 		$ret = 3;
 	}
-	if(($localTime  < $sunsetToday) && ($localTime  > ($sunsetToday - 1800) ) )
+	elseif(($localTime  < $sunsetToday) && ($localTime  > ($sunsetToday - 1800) ) )
 	{
 		// Dusk
 		$ret = 1;
 	}
+	else
+	{
+		// Should not get here.
+		$ret = -1;
+	}
+
+	// Simple fix for now:
+	if($localTime > $sunriseToday && $localTime < $sunsetToday)
+	{
+		// Day
+		$ret = 0;
+	}
+	else
+	{
+		// night.
+		$ret = 2;
+	}
 
 
+	//print "local/rise/set/ret: " . $localTime . " / " . $sunriseToday . " / " . $sunsetToday . " / " . $ret . "\n\n";
 	return $ret;
 }
 
@@ -491,119 +593,6 @@ function convertTemp($temperature)
 	return ($temperature - 32) * (5/9);
 }
 
-function metascore($day, $units, $metaFlag)
-{
-	// Returns a metscore for a day based upon the input conditions for that day.
-	// Depending upon $metaFlag, analyzes either instantaneous readings ($metaFlag == 0) or
-	// analyzes a later day's conditons from an associative array. 
-
-	// Update notes: will change $day to $json object, and $metaFlag to $interval
-	// If( gettype($interval) == 'integer')
-	// {
-	//    If ($interval == 0), give an instantaneous analysis, 
-	//    elseif ($interval > 0 && $interval <= 7), and give a reading for that day in the list.  $json->daily->data[$interval-1] has data for each of the next 7 days
-	//    else, throw an out-of-bounds exception
-	// }
-	// if( gettype($interval) == 'string'), than its a string
-		// if($interval[0] == 'h'), than assume it's a string starting with "h" + X (e.g. "h4"), do an hourly reading for 4 hours ahead, if possible.  If the reminder of the string is invalid, throw an exception.
-		//  - $json->hourly->data[$i] has data for each of the next 48(?) hours
-		//	- $json->hourly->data[intval(substr($interval, 1))]  should get the hourly data corresponding to the integer value of the input from the 2nd digit onwards. 
-
-	// Subtract 5% if dawn/dusk, and 15% if it's nighttime.  Pass in $json to periodOfDay.
-
-
-	// $day if instantaneous: [0]: windspeed, [1]: temperature, [2]: $icon
-	if($metaFlag == 0)
-	{
-		$temperature = $day[0];
-		$windSpeed = $day[1];
-		$icon = $day[2];
-	}
-	else
-	{
-		$windSpeed = floatval($day[1]);
-		$precipProbab = floatval($day[3][2]);
-
-		$temperatureMin = floatval($day[4][0]);
-		$temperatureMax = floatval($day[4][1]);
-		$temperature = (($temperatureMax - $temperatureMin) / 2) + $temperatureMin;
-
-		$icon = $day[5];
-	}
-
-	// Start off assuming perfect conditions
-	$score = 100;
-
-	// If CA, don't convert, if UK, convert mph to km/hr, if US, convert mph to km/hr AND convert F to C
-	if($units == "US")
-	{
-		$windSpeed = convertSpeed($windSpeed);
-		$temperature = convertTemp($temperature);
-	}
-	if($units == "UK")
-	{
-		$windSpeed = convertSpeed($windSpeed);
-	}
-
-	/*
-		Analysis
-	 	Now things should be (uniformly) in "Canadian" format.  Analyze the data and produce a metascore.
-	*/
-
-	// Deduct [3 points] for each km/hr of excessive wind
-	if($windSpeed > 10)
-	{
-		$score = $score - (3 * ($windSpeed - 10));
-	}
-	// Deduct [3 points] for each degree of excessively hot temperature
-	if($temperature > 25)
-	{
-		$score = $score - (3 * ($temperature - 25));
-	}
-	// Deduct [3 points] for each degree of excessively cold temperature
-	if($temperature < 10)
-	{
-		if($temperature == 0)
-		{
-			$score = $score - 30;
-		}
-
-		if($temperature > 0)
-		{
-			$score = $score - (3 * (10 - $temperature));
-		}
-		if($temperature < 0)
-		{
-			$score = $score + (3 * (-10 + $temperature)); 
-		}
-	}
-
-	// If $precipProb is high, or if the conditons ($icon) contain bad words :P, then lower the score
-	if($icon == "rain" || $icon == "snow" || $icon == "sleet" || $icon == "hail")
-	{
-		// Than it's precipitating badly enough for a serious deduction (40% of what it would be otherwise)
-		$score = $score * 0.4;
-	}
-
-	$score = round($score);
-
-	if($icon == "fog")
-	{
-		$score = $score - 10;
-	}
-
-	// Set a floor and ceiling to keep the overall value constrained.
-	if($score > 100)
-	{
-		$score = 100;
-	}
-	if($score < 0)
-	{
-		$score = 0;
-	}
-	return (string)$score;
-}
-
 function clean($str)
 {
 	// Returns a tidied-up string to prevent script injection, CX attacks, etc.; takes in a raw-input string, $str.
@@ -622,7 +611,7 @@ function compass($degrees)
 	return $compdir;
 }
 
-function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
+function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway, $onewayCompass)
 {
 	// Reports the contents of an associative array, $week, containing data about the following week's weather forecast.
 	// Assumes a properly formatted $week associative array.
@@ -699,81 +688,25 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 
 	for($i = 0; $i <= 6; $i++)
 	{
-		array_push($metaArray, metascore($week[$i], $units, 1));
+		if (function_exists('meta'))
+		{
+			if($oneway === "true")
+			{
+				array_push($metaArray, meta($json, $units, "d{$i}", $onewayCompass));
+			}
+			else
+			{
+				array_push($metaArray, meta($json, $units, "d{$i}"));
+			}
+		}
+		else
+		{
+			array_push($metaArray, "N/A");
+		}
 	}		
 
 	$graphData = makeGraph($metaArray);
-/*
-	// Weather output for each day of the coming week
-	$reportOutput .= "<div class='summaryRow'>\n";
-	$firstDayFlag = 1;
 
-	for($i = 0; $i <= 7; $i++)
-	{
-		if($i < 7)
-		{
-			$reportOutput .= "<div class='summaryCell'>\n";
-			$reportOutput .= "<p>";
-
-			if($firstDayFlag == 1)
-			{
-				if($today <= 6)
-				{
-					$reportOutput .= "<b><i>Today (" . $weekdays[$today] . "):</i></b><br/>\n";	// weekday
-					$firstDayFlag = 0;
-				}
-				else
-				{
-					$reportOutput .= "<b><i>Today (" . $weekdays[$today - 7] . "):</i></b><br/>\n";	// weekday
-					$firstDayFlag = 0;	
-				}
-			}
-			elseif($today <= 6)
-			{
-				$reportOutput .= "<b><i>" . $weekdays[$today] . ":</i></b><br/>\n";	// weekday
-			}
-			else
-			{
-				// We've gone off the end off the array, so compensate.
-				$reportOutput .= "<b><i>" . $weekdays[$today - 7] . "</i></b>:<br/>";	// Weekday
-			}
-
-			$reportOutput .= $week[$i][0] . "<br/>";	// This day's summary
-			$reportOutput .= "Wind speed/bearing: " . round($week[$i][1]) . " " . $unitChoices[2] . " / " . $week[$i][2] . "&deg;<br/>\n";
-			$reportOutput .= "P.O.P.: " . ($week[$i][3][2] * 100) . " &#37;<br/>\n";
-			$reportOutput .= "Temperature min/max: " . round($week[$i][4][0]) . "&deg;" . $unitChoices[1] . " / " . round($week[$i][4][1]) . "&deg;" . $unitChoices[1] . "<br/>\n"; 
-			$reportOutput .= "Feels like: " . round($week[$i][4][2]) . "&deg;" .  $unitChoices[1] . " / " . round($week[$i][4][3]) . "&deg;" .   $unitChoices[1] . "<br/>\n";
-			//$reportOutput .= "Icon: " . $week[$i][5] . "<br/>\n";
-
-			$reportOutput .= "Overall: " . metascore($week[$i], $units, 1) . "&#37;\n";
-
-			$reportOutput .= "</p>\n";
-			if($i == 3)
-			{
-				$reportOutput .= "</div>\n";	// Close off this cell
-				$reportOutput .= "</div>\n";	// Close off the row
-				$reportOutput .= "<div class='summaryRow'>\n";	// Start new row
-			}
-			else
-			{
-				$reportOutput .= "</div>\n";	// Close off this cell
-			}
-		}
-
-	    if($i == 7)
-		{
-				$reportOutput .= "<!-- PSA courtesy of: Bicycles Network Australia bicycles.net.au-->\n";
-				$reportOutput .= "<div class='summaryCell' id='psaImage' style='background-image: url(graphics/psa/clown.jpg); background-size: 70%; background-repeat:no-repeat; background-height:100%;'>\n";
-				//$reportOutput .= psaImage("clown.jpg", "Don't be a clown, tilt your lights down!");
-		}
-
-		$today++;
-	}
-
-	$reportOutput .= "</div>\n";	// Close off the last row
-	$reportOutput .= "</div>\n";	// Close off the "table"
-
-*/
 	// Weekly weather report output
 	$today = date('N', $unixDay); // Returns 1-7
 
@@ -784,20 +717,53 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 		$reportOutput .= "<div class='dayCell'>";
 			if($today <= 6)
 			{
-				$reportOutput .= "<b>" . $weekdaysShort[$today] . ": </b>" .  metascore($week[$i], $units, 1) . "%<br/>\n";	// weekday
+				if (function_exists('meta'))
+				{
+					$metaFlag = "d" . $i;
+					//print "metaflag, oneway, compass: " . $metaFlag . " / " . $oneway . " / " . $onewayCompass . "\n\n";
+					if($oneway === "true")
+					{
+						$reportOutput .= "<b>" . $weekdaysShort[$today] . ": </b>" .  meta($json, $units, $metaFlag, $onewayCompass) . "%<br/>\n";	// weekday
+					}
+					if($oneway === "false")
+					{
+						$reportOutput .= "<b>" . $weekdaysShort[$today] . ": </b>" .  meta($json, $units, $metaFlag) . "%<br/>\n";	// weekday
+					}
+				}
+				else
+				{
+					$reportOutput .= "<b>N/A</b><br/>\n"; 
+				}
+
 			}
 			else
 			{
-				$reportOutput .= "<b>" . $weekdaysShort[$today - 7] . ": </b>" .  metascore($week[$i], $units, 1) . "%<br/>\n";	// weekday
+				if (function_exists('meta'))
+				{
+					$metaFlag = "d" . $i;
+					if($oneway === "true")
+					{
+					$reportOutput .= "<b>" . $weekdaysShort[$today - 7] . ": </b>" .  meta($json, $units, $metaFlag, $onewayCompass) . "%<br/>\n";	// weekday
+					}
+					if($oneway === "false")
+					{
+						$reportOutput .= "<b>" . $weekdaysShort[$today - 7] . ": </b>" .  meta($json, $units, $metaFlag) . "%<br/>\n";	// weekday
+					}
+				}
+				else
+				{
+					$reportOutput .= "<b>N/A</b><br/>\n"; 
+				}
 			}
-			// $reportOutput2 .= // image tag corresponding to icon: $week[$i][5], sized small   . "<br/>\n";
-			// Can set width = 100% for icon, but how to proportionately set the height?  Set the image itself to 50%(?) of its original size
-			// Original size 256x256
 			$reportOutput .= "<img src='graphics/icons/" . $week[$i][5] . ".png' alt='Current Weather: " . $week[$i][5] . "' height='50' width='50'/><br/>";
 			$reportOutput .= round($week[$i][4][1]) . "&deg;" . $unitChoices[1] . " Max<br/>\n";
-			$reportOutput .= round($week[$i][4][0]) . "&deg;" . $unitChoices[1] . " Min<br/>\n";
-			$reportOutput .= round($week[$i][1]) . " " . $unitChoices[2] . " / " . compass($week[$i][2]) . "<br/>\n";
-			$reportOutput .=  $week[$i][0] . "<br/>\n";
+			$reportOutput .= round($week[$i][4][0]) . "&deg;" . $unitChoices[1] . " Min<br/><br/>\n";
+
+			$reportOutput .= round($week[$i][1]) . " " . $unitChoices[2] . " / " . compass($week[$i][2]) . "<br/><br/>\n";
+
+			$reportOutput .= "Feels like:<br/>" . $json->daily->data[$i]->apparentTemperatureMin . "&deg;" . $unitChoices[1] . " to " . $json->daily->data[$i]->apparentTemperatureMax . "&deg;" . $unitChoices[1] . "<br/><br/>\n";
+
+			$reportOutput .=  "<b>" . $week[$i][0] . "</b><br/>\n";
 		$reportOutput .= "</div><!--dayCell-->\n";
 		$today++;
 	}
@@ -805,9 +771,6 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey)
 	$reportOutput .= "</div><!--summaryTable-->\n";
 
 	$ret = array();
-
-	//array_push($ret, $graphData, $reportOutput2);
-
 
 	array_push($ret, $graphData, $reportOutput);
 
@@ -931,7 +894,6 @@ $output .= startUntilBody($cityName, $lat, $lng);
 $output .= "<div id='container'>\n";
 	$output .= bookmarkMe();
 
-
 	// Header
 	$output .= "<div id='header' style='background-image: url(https://maps.googleapis.com/maps/api/staticmap?center=" . ($lat - 0.12) . "," . $lng . "&zoom=11&size=600x600);'>\n";
 	$output .= "<h1>Bike Report: " . $cityName . "</h1>\n";
@@ -964,9 +926,7 @@ $output .= "<div id='container'>\n";
 	$output .= "<div id='topContent'>\n";
 
 		// Report the week's weather
-		$weekAndGraph = reportWeekly($weeklyWeather, $units, $weeklyForecast, $json, $camAPIKey);
-
-//		makeCamArray($json, $camAPIKey);
+		$weekAndGraph = reportWeekly($weeklyWeather, $units, $weeklyForecast, $json, $camAPIKey, $oneway, $onewayCompass);
 
 		$output .= "<div id='left'>\n";
 		$output .= $weekAndGraph[0]; // Print out the graph code		
@@ -984,7 +944,22 @@ $output .= "<div id='container'>\n";
 				$output .= "<div class='topRow'>\n";
 
 						$output .= "<div class='topCell'  id='bigMeta'>\n";
-						$output .= "<h1>" . metascore($instantMeta, $units, 0) . "&#37; </h1>";
+						if (function_exists('meta'))
+						{
+							if($oneway === "true")
+							{
+								$output .= "<h1>" . meta($json, $units, 0, $onewayCompass) . "&#37; </h1>";
+							}
+							if($oneway === "false")
+							{
+								$output .= "<h1>" . meta($json, $units, 0) . "&#37; </h1>";
+							}
+						}
+						else
+						{
+							$output .= "<h1>N/A</h1>";
+						}
+
 						$output .= "<b>Overall</b>\n";
 						$output .= "<!--topCell(meta)--></div>\n";
 
@@ -1058,14 +1033,17 @@ $output .= "<div id='container'>\n";
 		$output .= "<!--topContent--></div>\n";
 
 		$output .= "<div id='below'>";
+
+		$hoursToReport = array(2, 4, 8, 12);
+		$output .= makeHourlyReport($json, $units, $hoursToReport);
+
 		$output .= $weekAndGraph[1]; // Print out the Weekly Summary
 		$output .= "<!--below--></div>";
 
 		print $output;
 
-		$output = "";
 
-		print $output;
+
 		$output = "";
 
 	$output .= "<!--content--></div>\n";

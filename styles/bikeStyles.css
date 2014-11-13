@@ -9,8 +9,11 @@
 				background-image: url("../graphics/crossBackgroundBlueDark.png");
 				background-repeat: repeat;
 				font-family: 'Droid Serif';
-				height: 100%;
 				min-height: 100%;
+			}
+
+			h2 {
+				display: inline;
 			}
 
             button 
@@ -20,13 +23,20 @@
             	border: none;
             	border: 1px rgba(0,0,0,0.9);
             	text-shadow: 1px 1px 3px #666666;
+            	-webkit-border-top-right-radius: 20px;
+				-webkit-border-bottom-left-radius: 20px;
+				-moz-border-radius-topright: 20px;
+				-moz-border-radius-bottomleft: 20px;
+				border-top-right-radius: 20px;
+				border-bottom-left-radius: 20px;
+
             }
 
             .getReportButton
             {
             	width: 25%;
             	height: 2em;
-            	font-size: 200%;
+            	font-size: 100%;
 
             }
 
@@ -57,7 +67,7 @@
 
             .inputCell {
                 display: table-cell;
-                width: 25%;
+                width: 50%;
             }
 
 			#container
@@ -159,7 +169,6 @@
 			#content
 			{
 				background: #72A0C1;
-				height: 100%;
 				width: 100%;
 				overflow: hidden;
 				min-height: 100%;
@@ -201,14 +210,20 @@
 				margin-right: auto;
 			}
 
-			#weeklySummary
+			#weeklySummary, #dailySummary
 			{
 				width: 80%;
 				margin-left: auto;
 				margin-right: auto;
 			}
 
-			#weekly
+			#dailySummary
+			{
+				text-align: center;
+
+			}
+
+			#weekly, #daily, #dailyTitle
 			{
 				width: 80%;
 				margin-left: auto;
@@ -288,7 +303,7 @@
 				overflow: hidden;
 			}
 
-			.dayCell {
+			.hourCell, .dayCell {
 				display: table-cell;
 				width: 14%;
 				height: 250px;
@@ -302,6 +317,13 @@
 				-moz-border-radius-bottomleft: 20px;
 				border-top-right-radius: 20px;
 				border-bottom-left-radius: 20px;
+
+				text-align: center;
+
+			}
+
+			.dayCell {
+				width: 14%;
 			}
 
 			.miniCellTop {

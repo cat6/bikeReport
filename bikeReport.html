@@ -45,12 +45,18 @@
             border-bottom-left-radius: 10px;
         }
 
+        #left{
+            width:60%;
+            float:left;
+        }
+
         #right
         {
+            width: 40%;
             text-align: right;
         }
 
-        #units2
+        #units2, #compass
         {
             font-size: 100%;
         }
@@ -97,47 +103,54 @@
         });
 
         function ipReport(ipURL,frm) {
-            var units;
+            var units, oneway, compass;
 
+            oneway = document.getElementById("oneway").checked;
+            compass = frm.compass.value;
             units = frm.ipUnits.value;
-            relocate(ipURL + "&units=" + units);
+
+            relocate(ipURL + "&units=" + units + "&oneway=" + oneway + "&compass=" + compass);
         }
 
         function pickDropDown(frm, placeArr, type, units)
         {
-                if(type == "major")
+            var oneway, compass;
+            oneway = document.getElementById("oneway").checked;
+            compass = frm.compass.value;
+
+            if(type == "major")
+            {
+                dropDownValue = cityDropDown.value;
+            }
+            if(type == "explore")
+            {
+                dropDownValue = interestingDropDown.value;
+            }
+            // foreach over an array of predefined city data; if found, populate the results and move on; else, use the city name in a search-mode result
+            for(i = 0; i < placeArr.length; i++)
+            {
+                if(dropDownValue.toLowerCase() == placeArr[i][2].toLowerCase())
                 {
-                    dropDownValue = cityDropDown.value;
+                    lat = placeArr[i][0];
+                    lng = placeArr[i][1];
+                    cityName = placeArr[i][2];
+                    locality = placeArr[i][3];
+                    country = placeArr[i][4];
+                    
+                    relocate("bikeReport.php?cityName=" + cityName + "&lat=" + lat + "&lng=" + lng + "&locality=" + locality + "&country=" + country + "&units=" + units + "&oneway=" + oneway + "&compass=" + compass);
                 }
-                if(type == "explore")
+                else
                 {
-                    dropDownValue = interestingDropDown.value;
+                    // As a backup.
+                    cityName = dropDownValue;
                 }
-                // foreach over an array of predefined city data; if found, populate the results and move on; else, use the city name in a search-mode result
-                for(i = 0; i < placeArr.length; i++)
-                {
-                    if(dropDownValue.toLowerCase() == placeArr[i][2].toLowerCase())
-                    {
-                        lat = placeArr[i][0];
-                        lng = placeArr[i][1];
-                        cityName = placeArr[i][2];
-                        locality = placeArr[i][3];
-                        country = placeArr[i][4];
-                        
-                        relocate("bikeReport.php?cityName=" + cityName + "&lat=" + lat + "&lng=" + lng + "&locality=" + locality + "&country=" + country + "&units=" + units);
-                    }
-                    else
-                    {
-                        // As a backup.
-                        cityName = dropDownValue;
-                    }
-                }
-                i = 0;
+            }
+            i = 0;
         }
 
         function parseIP(res) {
             // Parse json object with user location data
-            var jsonArr, ip, ipCityName, ipCountry, ipLat, ipLng, ipLocality, units, ipOutput;
+            var jsonArr, ip, ipCityName, ipCountry, ipLat, ipLng, ipLocality, units, ipOutput, oneway, compass;
 
             jsonArr = JSON.parse(res);
             ip = jsonArr.ip;
@@ -146,7 +159,8 @@
             ipLat = jsonArr.latitude;
             ipLng = jsonArr.longitude;
             ipLocality = jsonArr.region_name;
-            //units = "CA";  // Hard-coded for now
+            oneway = document.getElementById("oneway").checked;
+            compass = document.getElementsByName('compass')[0].value;
             units = document.getElementsByName('units2')[0].value;
             //units = document.getElementById('units2').value;
             //units = this.form.units.value; // doesn't work
@@ -156,7 +170,7 @@
 
             ipOutput = "<h6>Based upon your IP address (" + ip + "), you appear to be in " + ipCityName + ", " + ipCountry + ".</h6>";//  Would you like to get the report for " + ipCityName + "?<br/><br/></div>";
 
-            ipArray = [ipCityName, ipLocality, ipCountry, ipLat, ipLng];
+            ipArray = [ipCityName, ipLocality, ipCountry, ipLat, ipLng, oneway, compass];
 
             ipOutput += "<button type='button' id='checkButtonIP' onclick='ipArray.push(&quot;" + units + "&quot;); getCityData(ipArray)'>Get Report for " + ipCityName + "</button>";
 
@@ -166,12 +180,15 @@
         }
 
         function getCityData(frm) {
-            var majorCities, units, output, cityXML, cityURL, cityURL1, cityURL2, cityName, candidates, lat, lng, locality, country, i;
+            var majorCities, units, output, cityXML, cityURL, cityURL1, cityURL2, cityName, candidates, lat, lng, locality, country, i, oneway, compass;
 
             // If frm is an array, then it contains the specifics of a place from IP tracing.  Just go straight to the report page.
             if(frm instanceof Array)
             {
-                relocate("bikeReport.php?cityName=" + frm[0] + "&lat=" + frm[3] + "&lng=" + frm[4] + "&locality=" + frm[1] + "&country=" + frm[2] + "&units=" + frm[5]);
+                oneway = document.getElementById("oneway").checked;
+                compass = document.getElementsByName('compass')[0].value;
+                units = document.getElementsByName('units2')[0].value;
+                relocate("bikeReport.php?cityName=" + frm[0] + "&lat=" + frm[3] + "&lng=" + frm[4] + "&locality=" + frm[1] + "&country=" + frm[2] + "&units=" + units + "&oneway=" + oneway + "&compass=" + compass);
             }
 
             // Default cities data: lat, lng, cityName, locality, country
@@ -380,13 +397,19 @@
             {
                 if(typeof(didYouMeanCities[i][2]) != 'undefined')
                 {
+                    oneway = document.getElementById("oneway").checked;
+                    compass = document.getElementsByName('compass')[0].value;
+                    units = document.getElementsByName('units2')[0].value;
                     validCityFlag = 1;
                     didYouMeanOutput += "<a href='bikeReport.php?cityName=" + didYouMeanCities[i][2];
                     didYouMeanOutput += "&lat=" + didYouMeanCities[i][0];
                     didYouMeanOutput += "&lng=" + didYouMeanCities[i][1];
                     didYouMeanOutput += "&locality=" + didYouMeanCities[i][3];
                     didYouMeanOutput += "&country=" + didYouMeanCities[i][4];
-                    didYouMeanOutput += "&units=" + units + "'>";
+                    didYouMeanOutput += "&units=" + units;
+                    didYouMeanOutput += "&oneway=" + oneway;
+                    didYouMeanOutput += "&compass=" + compass;
+                    didYouMeanOutput += "'>";
 
                     if(didYouMeanCities[i][2])
                     {
@@ -446,6 +469,19 @@
                                     <option value="UK">Mixed    (mi/C)</option>
                                 </select>  <h4>Units</h4>
                             <!--inputCell--></div>
+                            <div class='inputCell' style="padding-left: 20px;">
+                                <input type="checkbox" id="oneway" name="oneway" value="oneway" style="padding-left: 20px;"><h4>One-way trip</h4>
+                                <select name="compass" id="compass">
+                                    <option value="0"><b>N</b></option>
+                                    <option value="45">NE</option>
+                                    <option value="90"><b>E</b></option>
+                                    <option value="135">SE</option>
+                                    <option value="180"><b>S</b></option>
+                                    <option value="225">SW</option>
+                                    <option value="270"><b>W</b></option>
+                                    <option value="315">NW</option>
+                                </select>
+                            <!--inputCell--></div>
                         </div><!--left-->
 
                         <div id='right'>
@@ -462,21 +498,26 @@
                             <label for='cityDropDown'><h2>Pick a City</h2></label>
                             
                             <select name="cityDropDown" id="cityDropDown" onchange = "interestingDropDown.value = 'default'">
+                                <optgroup label="N America">
                                 <option value="default">Choose...</option>
                                 <option value="toronto">Toronto</option>
                                 <option value="new york">New York</option>
                                 <option value="portland">Portland</option>
 
+                                <optgroup label="Europe">
                                 <option value="london">London</option>
                                 <option value="paris">Paris</option>
                                 <option value="moscow">Moscow</option>
                                 <option value="Berlin">Berlin</option>
                                 <option value="amsterdam">Amsterdam</option>
 
+                                <optgroup label="Australia">
                                 <option value="sydney">Sydney</option>
 
+                                <optgroup label="Africa">
                                 <option value="cairo">Cairo</option>
 
+                                <optgroup label="Asia">
                                 <option value="Tokyo">Tokyo</option>
                                 <option value="hong kong">Hong Kong</option>
                                 <option value="shanghai">Shanghai</option>

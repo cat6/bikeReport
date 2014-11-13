@@ -1,6 +1,9 @@
 # PHP ini files
 bikereport.ini
 
+# Metascore algorithm
+meta.php
+
 # Project notes
 notes.txt
 
