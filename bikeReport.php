@@ -47,7 +47,7 @@ function makeHourlyReport($json, $units, $hoursToReport)
 	// Summary for the next few hours
 	$output .= "<div class='summaryTable' id='dailyTitle'>\n";
 
-	$output .= "<div class='summaryRow' style='width: 80%;'>\n";
+	$output .= "<div class='summaryRow'>\n";
 	$output .= "<div class='summaryTitleCell' id='dailySummary'>\n";
 	$output .= "<h3><b>In the next few hours:  " . $json->hourly->summary . "</b></h3>\n";
 	$output .= "</div><!--hourly summary dayCell-->\n";
@@ -55,7 +55,7 @@ function makeHourlyReport($json, $units, $hoursToReport)
 	$output .= "</div><!--hourly summary summaryTable-->\n";
 
 	$output .= "<div class='summaryTable' id='daily'>\n";
-	$output .= "<div class='summaryRow' style='width: 80%'>\n";
+	$output .= "<div class='summaryRow'>\n";
 
 	foreach($hoursToReport as $hour)
 	{
@@ -313,60 +313,157 @@ function thermometer($units)
 	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
 	$thermometerOutput = "
 	<script>
-/**
- * Thermometer Progress meter.
- * This function will update the progress element in the \"thermometer\"
- * to the updated percentage.
- * If no parameters are passed in it will read them from the DOM
- *
- * @param {Number} goalAmount The Goal amount, this represents the 100% mark
- * @param {Number} progressAmount The progress amount is the current amount
- * @param {Boolean} animate Whether to animate the height or not
- *
- */
-function thermometer(id, goalAmount, progressAmount, animate) {
-    \"use strict\";
+		/**
+		 * Thermometer Progress meter.
+		 * This function will update the progress element in the \"thermometer\"
+		 * to the updated percentage.
+		 * If no parameters are passed in it will read them from the DOM
+		 *
+		 * @param {Number} goalAmount The Goal amount, this represents the 100% mark
+		 * @param {Number} progressAmount The progress amount is the current amount
+		 * @param {Boolean} animate Whether to animate the height or not
+		 *
+		 */
+		function thermometer(id, goalAmount, progressAmount, animate) {
+		    \"use strict\";
 
-    var \$thermo = \$(\"#\"+id),
-        \$progress = \$(\".progress\", \$thermo),
-        \$goal = \$(\".goal\", \$thermo),
-        percentageAmount,
-        isHorizontal = \$thermo.hasClass(\"horizontal\"),
-        newCSS = {};
+		    var \$thermo = \$(\"#\"+id),
+		        \$progress = \$(\".progress\", \$thermo),
+		        \$goal = \$(\".goal\", \$thermo),
+		        percentageAmount,
+		        isHorizontal = \$thermo.hasClass(\"horizontal\"),
+		        newCSS = {};
 
-    goalAmount = goalAmount || parseFloat( \$goal.text() ),
-    progressAmount = progressAmount || parseFloat( \$progress.text() ),
-    percentageAmount =  Math.min( Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
+		    goalAmount = goalAmount || parseFloat( \$goal.text() ),
+		    progressAmount = progressAmount || parseFloat( \$progress.text() ),
+		    percentageAmount =  Math.min( Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
 
-    //let\"s format the numbers and put them back in the DOM
-    \$goal.find(\".amount\").text( goalAmount +";
+		    //let\"s format the numbers and put them back in the DOM
+		    \$goal.find(\".amount\").text( goalAmount +";
 
     $thermometerOutput .= "\"" . $unitChoices[1] . "\" );";
     $thermometerOutput .= "\$progress.find(\".amount\").text( progressAmount +";
     $thermometerOutput .= "\"" . $unitChoices[1] . "\" );";
 
 	$thermometerOutput .= "
-    //let\"s set the progress indicator
-    \$progress.find(\".amount\").hide();
+	    //let\"s set the progress indicator
+	    \$progress.find(\".amount\").hide();
 
-    newCSS[ isHorizontal ? \"width\" : \"height\" ] = percentageAmount + \"%\";
+	    newCSS[ isHorizontal ? \"width\" : \"height\" ] = percentageAmount + \"%\";
 
-    if (animate !== false) {
-        \$progress.animate( newCSS, 1200, function(){
-            \$(this).find(\".amount\").fadeIn(500);
+	    if (animate !== false) {
+	        \$progress.animate( newCSS, 1200, function(){
+	            \$(this).find(\".amount\").fadeIn(500);
+	        });
+	    }
+	    else {
+	        \$progress.css( newCSS );
+	        \$progress.find(\".amount\").fadeIn(500);
+	    }
+	}
+
+	\$(document).ready(function(){
+	    thermometer(\"thermo1\");
+	});
+	</script>
+		";
+
+	$thermometerOutput = "";
+
+	$thermometerOutput .= "   <script>
+        //Based originally on a positive-only \"fundraising\" type thermometer by \"Geeky John\" http://jsfiddle.net/GeekyJohn/vQ4Xn/
+
+
+        function percentage(goalAmount, minAmount, progressAmount) {
+            var range, compensated, percentageAmount;
+
+            range = (goalAmount + 274) - (minAmount + 274);
+            compensated = (progressAmount + 274) - (minAmount + 274);
+            percentageAmount = (progressAmount + 274) - (minAmount + 274) / range;
+
+            percentageAmount = compensated / range;
+            percentageAmount = percentageAmount * 100;
+
+            return percentageAmount;
+        }
+        /**
+         * Thermometer Progress meter.
+         * This function will update the progress element in the \"thermometer\"
+         * to the updated percentage.
+         * If no parameters are passed in it will read them from the DOM
+         *
+         * @param {Number} goalAmount The Goal amount, this represents the 100% mark
+         * @param {Number} progressAmount The progress amount is the current amount
+         * @param {Boolean} animate Whether to animate the height or not
+         *
+         */
+        function thermometer(unitChoice, goalAmount, progressAmount, minAmount, animate) {
+            \"use strict\";
+
+            var \$thermo = \$(\"#thermometer\"),
+                \$progress = \$(\".progress\", \$thermo),
+                \$goal = \$(\".max\", \$thermo),
+                \$min = \$(\".min\", \$thermo),
+                \$mid = \$(\".mid\", \$thermo),
+                percentageAmount, minHeight,
+                compensated, midAmount, range, rangePercent;
+
+            // Metric units by default
+            unitChoice = unitChoice || 'C';
+
+            // Adjustment value for the midline marker line (typically the zero on a thermometer)
+            // Change this to move your 'zero' value up or down the thermometer to compensate for size changes
+            var minAdjust = -25;
+
+            // Animate by default
+            var animate = typeof Boolean !== 'undefined' ? animate : true;
+
+            goalAmount = goalAmount || parseFloat(\$goal.text()),
+            minAmount = minAmount || parseFloat(\$min.text()),
+            midAmount = midAmount || parseFloat(\$mid.text()),
+            progressAmount = progressAmount || parseFloat(\$progress.text()),
+            percentageAmount = Math.min(Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
+
+            //let's format the numbers and put them back in the DOM
+            \$goal.find(\".amount\").text(goalAmount + unitChoice);
+            \$progress.find(\".amount\").text(progressAmount + unitChoice);
+            \$mid.find(\".amount\").text(midAmount + unitChoice);
+            \$min.find(\".amount\").text(minAmount + unitChoice);
+
+            percentageAmount = percentage(goalAmount, minAmount, progressAmount);
+
+            minHeight = percentage(goalAmount, minAmount, 0);
+
+            $(\"#thermometer .mid\").css(\"bottom\", ((minHeight + minAdjust) + \"%\")); 
+
+            //let's set the progress indicator
+            \$progress.find(\".amount\").hide();
+            
+            if (animate !== false) {
+                \$progress.animate({
+                    \"height\": percentageAmount + \"%\"
+                }, 1200, function () {
+                    \$(this).find(\".amount\").fadeIn(500);
+                });
+            } else {
+                \$progress.css({
+                    \"height\": percentageAmount + \"%\"
+                });
+                \$progress.find(\".amount\").fadeIn(500);
+            }
+        }
+
+        \$(document).ready(function () 
+        {
+            // Call thermometer() without arguments to have it read from the DOM
+            thermometer('" . $unitChoices[1] . "');
+            // ...or with parameters if you want to update it using JavaScript.
+            // You can update live, and choose whether to show the animation
+            // (you might not if the updates are relatively small).
+            //thermometer(50, -21, -30, true);
         });
-    }
-    else {
-        \$progress.css( newCSS );
-        \$progress.find(\".amount\").fadeIn(500);
-    }
-}
+    </script>";
 
-\$(document).ready(function(){
-    thermometer(\"thermo1\");
-});
-</script>
-	";
 	return $thermometerOutput;
 }
 
@@ -375,8 +472,8 @@ function bookmarkMe()
 	$bookmarkMeOutput = "
 		<script>
 		// Credit: http://stackoverflow.com/questions/10033215/add-to-favorites-button
-    	$(function() {
-	        $('#bookmarkme').click(function() {
+    	\$(function() {
+	        \$('#bookmarkme').click(function() {
 	            if (window.sidebar && window.sidebar.addPanel) { // Mozilla Firefox Bookmark
 	                window.sidebar.addPanel(document.title,window.location.href,'');
 	            } else if(window.external && ('AddFavorite' in window.external)) { // IE Favorite
@@ -408,7 +505,10 @@ function startUntilBody($cityName, $lat, $lng)
 		<!-- Google line graph -->
 		<script type='text/javascript' src='https://www.google.com/jsapi'></script>
 
-		<link href='http://fonts.googleapis.com/css?family=Droid+Serif%7CCrimson+Text' rel='stylesheet' type='text/css'>
+		<link href='http://fonts.googleapis.com/css?family=Playfair+Display|Droid+Serif' rel='stylesheet' type='text/css'>
+
+		<!--<link href='http://fonts.googleapis.com/css?family=Droid+Serif%7CCrimson+Text' rel='stylesheet' type='text/css'>-->
+
 		<link rel='stylesheet' href='styles/tinycarousel.css' type='text/css' media='screen'/>
 
 		<!--Main CSS-->
@@ -417,25 +517,7 @@ function startUntilBody($cityName, $lat, $lng)
 		<script>
 			$(window).load(function()
 				{
-					$('#slider1').tinycarousel({ 
-						interval: true
-					, 	bullets: true 
-					});
-						var slider1 = $('#slider1').data('plugin_tinycarousel');
-
-						    // The start method starts the interval.
-						    $('#startslider').click(function()
-						    {
-						        slider1.start();
-						        return false;
-						    });
-
-						    // The stop method stops the interval.
-						    $('#stopslider').click(function()
-						    {
-						        slider1.stop();
-						        return false;
-					});
+					$('#slider1').tinycarousel({ interval: true });
 				});
 		</script>
 ";
@@ -619,7 +701,7 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 
 	$weekdays = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
 	$weekdaysShort = array("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
-	$unixDay = mktime();
+	$unixDay = time();
 	$today = date('N', $unixDay); // Returns 1-7
 	$cityName = $_GET["cityName"];
 	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
@@ -632,7 +714,7 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 	if($camArray[0] != '')
 	{
 		$reportOutput .= "<div class='summaryRow'>\n";
-		$reportOutput .= "	<div class='titleCell'>
+		$reportOutput .= "	<div class='summaryTitleCell'>
 								<div id='slider1'> ";
 								if(sizeof($camArray) < 5)
 								{
@@ -662,23 +744,32 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 										}
 										$reportOutput .= "
 										</ul>
-									</div>";
+									</div><!--overview-->";
 								if(sizeof($camArray) < 5)
 								{
 									$reportOutput .= "<a class='buttons next' href='#'>&gt;</a>";
 								}
 
-				$reportOutput .= "</div>
-							</div>";
-		$reportOutput .= "</div>\n";
+				$reportOutput .= "</div><!--viewport-->
+							</div><!--slider1-->";
+		$reportOutput .= "</div><!--summaryTitleCell-->\n";
 	}
+/*
+		$reportOutput .= "<div class='summaryRow' style='width: 80%;'>\n";
+			$reportOutput .= "<div class='summaryTitleCell' id='weeklySummary'>\n";
+			$reportOutput .= "<h3><b>Weekly Summary: </b>" . $weeklySummary. "</h3>";
+			$reportOutput .= "</div><!--summaryTitleCell-->\n";
+		$reportOutput .= "</div><!--summaryRow-->\n";
+*/
+	$reportOutput .= "</div><!--summaryTable-->\n";
 
+	$reportOutput .= "<div class='summaryTable'>\n";
 		$reportOutput .= "<div class='summaryRow'>\n";
 			$reportOutput .= "<div class='summaryTitleCell' id='weeklySummary'>\n";
 			$reportOutput .= "<h3><b>Weekly Summary: </b>" . $weeklySummary. "</h3>";
-			$reportOutput .= "</div>\n";
-		$reportOutput .= "</div>\n";
-	$reportOutput .= "</div>\n";
+			$reportOutput .= "</div><!--summaryTitleCell-->\n";
+		$reportOutput .= "</div><!--summaryRow-->\n";
+	$reportOutput .= "</div><!--summaryTable-->\n";
 
 	$reportOutput .= "<div class='summaryTable' id='weekly'>\n";
 
@@ -711,7 +802,7 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 	$today = date('N', $unixDay); // Returns 1-7
 
 	$reportOutput .= "<div class='summaryTable'>\n";
-	$reportOutput .= "<div class='summaryRow' style='text-align: center;'>\n";
+	$reportOutput .= "<div class='summaryRow'>\n";
 	for($i = 0; $i <= 6; $i++)
 	{
 		$reportOutput .= "<div class='dayCell'>";
@@ -797,6 +888,20 @@ else
 {
 	die('Error processing units');
 }
+
+if($tempSuffix == "F")
+{
+	$thermoMaxValue = 120;
+	$thermoMinValue = -20;
+}
+else
+{
+	// Metric by default
+	$thermoMaxValue = 40;
+	$thermoMinValue = -30;
+}
+$thermoMidValue = 0;
+
 
 // setup curl to make a call to the endpoint
 $session = curl_init($endpoint);
@@ -910,7 +1015,7 @@ $output .= "<div id='container'>\n";
 		$output .= "<li id='navAlert'>Warning: " . $todayAlerts[0] . "</li>";
 	}
 
-	$output .= "<li><a href='http://www.brianneary.net/EXPERIMENTS/newBikeReport/bikeReport.html' title='Try Another City'>Try Another City</a></li>";
+	$output .= "<li><a href='index.html' title='Try Another City'>Try Another City</a></li>";
 
 //	$output .= "<li><a target='_blank' href='" . getRadarMap($radarKey, $json->latitude, $json->longitude) . "' title='Radar'>Radar</a></li>"; // Weather radar map.
 
@@ -976,7 +1081,8 @@ $output .= "<div id='container'>\n";
 					}
 
 					$output .= "<div class='topCell'  id='bigTemperature'>\n";
-					$output .= "
+					
+					/*$output .= "
 								<div id='thermo1' class='thermometer'>
 								    <div class='track'>
 								        <div class='goal'>
@@ -996,6 +1102,30 @@ $output .= "<div id='container'>\n";
 								    <!--track--></div>
 								<!--thermo1--></div>
 					\n";
+					*/
+
+					$output .= "            
+						<div id=\"thermometer\">
+                			<div class=\"track\">
+                    			<div class=\"max\">
+                        			<div class=\"amount\">" . $thermoMaxValue . "</div>
+                    			</div>
+                    			
+                    			<div class=\"mid\">
+                        			<div class=\"amount\">" . $thermoMidValue . "</div>
+                    			</div>
+                    			
+                    			<div class=\"progress\">
+                        			<div class=\"amount\" style=\"display: block;\">" .
+                                       round($temperature)
+                        			. "</div>
+                    			</div>
+                    			<div class=\"min\">
+                        			<div class=\"amount\">" . $thermoMinValue . "</div>
+                    			</div>
+                			</div>
+            			</div>";
+
 					$output .= thermometer($units);
 					$output .= "<b>Temperature</b>\n";
 					$output .= "<!--topCell(thermo)--></div>\n";
