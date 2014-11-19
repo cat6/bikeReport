@@ -29,7 +29,6 @@
 				-moz-border-radius-bottomleft: 20px;
 				border-top-right-radius: 20px;
 				border-bottom-left-radius: 20px;
-
             }
 
             .getReportButton
@@ -299,7 +298,6 @@
 			.summaryRow {
 				display: table-row;
 				width: 80%;
-				text-align: center;
 			}
 
 			.summaryCell {

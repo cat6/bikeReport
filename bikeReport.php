@@ -39,6 +39,50 @@ $radarKey = $radarKey[0];
 	Functions
 */
 
+function inchesToCM($val)
+{
+	return $val * 2.54;
+}
+
+function getPrecipInfo($precipType, $precipIntensity, $units)
+{
+	if($precipType == "rain")
+	{
+		if($units == "US")
+		{
+			// Express rain in inches to one-tenth
+			$precipIntensity = round($precipIntensity, 1);
+		}
+		else
+		{
+			// Express in mm's
+			$precipIntensity = round(10 * inchesToCM($precipIntensity), 0);
+		}
+		return $precipIntensity;
+	}
+
+	if($precipType == "snow") 
+	{ 
+		if($units == "US")
+		{	
+			// Express snow to one-tenth of an inch
+			$precipAccumullation = round($precipAccumulation, 1);
+		}
+		else
+		{
+			// Express snow to the nearest cm.  
+			$precipAccumulation = round(inchesToCM($precipAccumulation, 0));
+			if($precipAccumulation < 0)
+			{
+				$precipAccumulation = "Less than 1cm";
+			} 
+			return $precipAccumulation;
+		}
+	}
+}
+
+
+
 function makeHourlyReport($json, $units, $hoursToReport)
 {
 	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
@@ -100,12 +144,10 @@ function getRadarMap($radarKey, $lat, $lng)
 	$radarURL .= "&height=" . $radarHeight;
 	$radarURL .= "&newmaps=1";
 
-// Provides a map 
+	// Provides a map 
 	$radarURL = "http://api.wunderground.com/api/" . $radarKey . "/radar/image.gif?centerlat=" . $lat . ";centerlon=" . $lng . "&radius=100&width=280&height=280&newmaps=1";
 
 $radarURL = "http://api.wunderground.com/api/" . $radarKey . "/radar/image.gif?centerlat=" . $lat . "&centerlon=" . $lng . "&radius=20&width=280&height=280&newmaps=1";
-
-
 
 	return $radarURL;
 }
@@ -123,9 +165,6 @@ function makeCamArray($data, $camAPIKey)
 	$endpointCam .= "&devid=";
 	$endpointCam .= $camAPIKey;
 	$endpointCam .= "&format=json";
-
-	// menu: lat/lng: 28.331 / 80.6131
-	// search: lat/lng: 28.3200067 / -80.6075513
 
 	// setup curl to make a call to the endpoint
 	$session = curl_init($endpointCam);
@@ -245,7 +284,6 @@ function periodOfDay($data)
 		$ret = 2;
 	}
 
-
 	//print "local/rise/set/ret: " . $localTime . " / " . $sunriseToday . " / " . $sunsetToday . " / " . $ret . "\n\n";
 	return $ret;
 }
@@ -257,7 +295,6 @@ function psaImage($imageName, $alt)
 	// or external source) on a regular basis.
 	// Assumes that $imageName is the name of a valid image in /graphics/psa/, and that $alt is a string of descriptive text.
 	return "<img src='graphics/psa/" . $imageName . "' alt='" . $alt . "' id='psaImage' width='100%' height='100%' />";
-//return "<span class='psaSpan' style='background: graphics/" . . "'></span>\n";
 }
 
 function checkAlerts($data)
@@ -496,6 +533,11 @@ function startUntilBody($cityName, $lat, $lng)
 	<head>
 		<title>The " . $cityName . " Bike Report</title>\n
 	 	<meta charset='UTF-8'>
+	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-160x160.png\" sizes=\"160x160\">
+	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-96x96.png\" sizes=\"96x96\">
+	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-16x16.png\" sizes=\"16x16\">
+	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-32x32.png\" sizes=\"32x32\">
+
 
 		<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
 		<!-- Tiny Carousel for webcams-->
@@ -506,8 +548,6 @@ function startUntilBody($cityName, $lat, $lng)
 		<script type='text/javascript' src='https://www.google.com/jsapi'></script>
 
 		<link href='http://fonts.googleapis.com/css?family=Playfair+Display|Droid+Serif' rel='stylesheet' type='text/css'>
-
-		<!--<link href='http://fonts.googleapis.com/css?family=Droid+Serif%7CCrimson+Text' rel='stylesheet' type='text/css'>-->
 
 		<link rel='stylesheet' href='styles/tinycarousel.css' type='text/css' media='screen'/>
 
@@ -754,13 +794,7 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 							</div><!--slider1-->";
 		$reportOutput .= "</div><!--summaryTitleCell-->\n";
 	}
-/*
-		$reportOutput .= "<div class='summaryRow' style='width: 80%;'>\n";
-			$reportOutput .= "<div class='summaryTitleCell' id='weeklySummary'>\n";
-			$reportOutput .= "<h3><b>Weekly Summary: </b>" . $weeklySummary. "</h3>";
-			$reportOutput .= "</div><!--summaryTitleCell-->\n";
-		$reportOutput .= "</div><!--summaryRow-->\n";
-*/
+
 	$reportOutput .= "</div><!--summaryTable-->\n";
 
 	$reportOutput .= "<div class='summaryTable'>\n";
@@ -811,7 +845,6 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 				if (function_exists('meta'))
 				{
 					$metaFlag = "d" . $i;
-					//print "metaflag, oneway, compass: " . $metaFlag . " / " . $oneway . " / " . $onewayCompass . "\n\n";
 					if($oneway === "true")
 					{
 						$reportOutput .= "<b>" . $weekdaysShort[$today] . ": </b>" .  meta($json, $units, $metaFlag, $onewayCompass) . "%<br/>\n";	// weekday
@@ -922,9 +955,6 @@ if ($search_results === NUL) die('Error parsing json');
 /*
 	Parse Weather Data
 */
-
-// We create variables like "$temperature" rather than "$json->currently->temperature" to make things easier to read and with less complexity.  
-// If this comes at the expense of slight extra resource usage, then so be it: the code will be more intuitive and have fewer typos.
 
 // Today's weather
 $currently = $json->currently->summary;
@@ -1042,10 +1072,6 @@ $output .= "<div id='container'>\n";
 
 			$output .= "<div class='topTable'>\n";
 
-			// Deprecated/testing
-			//$output .= "<p><b>Data:</b> " . $cityName . ", " . $state . ", " . $country . ", " . $lat . ", " . $lng .  ", " . $units . "<br/>\n";
-			//$output .= "<b>Time: </b>" . time() . "<br/>\n";
-			//$output .= "<b>Time Tomorrow: </b>" . (time() + 86400) . "<br/>\n";
 				$output .= "<div class='topRow'>\n";
 
 						$output .= "<div class='topCell'  id='bigMeta'>\n";
@@ -1082,28 +1108,6 @@ $output .= "<div id='container'>\n";
 
 					$output .= "<div class='topCell'  id='bigTemperature'>\n";
 					
-					/*$output .= "
-								<div id='thermo1' class='thermometer'>
-								    <div class='track'>
-								        <div class='goal'>
-								            <div class='amount'>";
-
-								        $output .= $thermoScale;
-
-								        $output .= "<!--amount--></div>
-								        <!--goal--></div>
-								        <div class='progress'>
-								            <div class='amount'>";
-
-								         $output .= round($temperature);
-
-								        $output .= "<!--amount--></div>
-								        <!--progress--></div>
-								    <!--track--></div>
-								<!--thermo1--></div>
-					\n";
-					*/
-
 					$output .= "            
 						<div id=\"thermometer\">
                 			<div class=\"track\">
@@ -1129,8 +1133,6 @@ $output .= "<div id='container'>\n";
 					$output .= thermometer($units);
 					$output .= "<b>Temperature</b>\n";
 					$output .= "<!--topCell(thermo)--></div>\n";
-
-//					$output .= "</div>\n";	// Close conditions right now cell
 
 					$output .= "<div class='topCell' id='bigCompass'>\n";
 
@@ -1172,14 +1174,11 @@ $output .= "<div id='container'>\n";
 
 		print $output;
 
-
-
 		$output = "";
 
 	$output .= "<!--content--></div>\n";
 
 	$output .= "<div id='footer'>\n";
-	//$output .= "<a id='bookmarkme' href='#' title='bookmark this page'>Bookmark This Page</a>";
 	$output .= "Copyright 2014";
 	$output .= "<!--footer--></div>\n";
 
