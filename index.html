@@ -4,8 +4,9 @@
 <head>
     <title>Bike Report</title>
     <meta charset="UTF-8">
+    <meta name="Description" content="Bike Report provides weather, forecast and analysis of biking conditions wherever you are."/>
     <script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
-    <link href='http://fonts.googleapis.com/css?family=Playfair+Display|Droid+Serif' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Playfair+Display%7CDroid+Serif' rel='stylesheet' type='text/css'>
     <link rel="icon" type="image/png" href="/favicon-160x160.png" sizes="160x160">
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
@@ -15,10 +16,6 @@
     <link rel='stylesheet' href='styles/bikeStyles.css' type='text/css' media='screen' /> 
 
     <style type='text/css'>    
-        #content
-        {
-            position: absolute;
-        }
         h4, h6
         {
             display: inline;
@@ -60,7 +57,7 @@
             text-align: right;
         }
 
-        #units2, #compass
+        #units2, #compass, #recommend
         {
             font-size: 100%;
         }
@@ -82,7 +79,21 @@
 
     </style>
 
+
+
+
     <script>
+
+        function escapeHtml(unsafe) 
+        {
+            return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+
         function tellIP(ip) {
             var ipXML, ipURL, userLocation;
 
@@ -166,13 +177,8 @@
             oneway = document.getElementById("oneway").checked;
             compass = document.getElementsByName('compass')[0].value;
             units = document.getElementsByName('units2')[0].value;
-            //units = document.getElementById('units2').value;
-            //units = this.form.units.value; // doesn't work
 
-            // enclose ipOutput in summarCell class div
-            //ipOutput = "<br/><div class='summaryCell'>";
-
-            ipOutput = "<h6>Based upon your IP address (" + ip + "), you appear to be in " + ipCityName + ", " + ipCountry + ".</h6>";//  Would you like to get the report for " + ipCityName + "?<br/><br/></div>";
+            ipOutput = "<h6>Based upon your IP address (" + ip + "), you appear to be in " + ipCityName + ", " + ipCountry + ".</h6>";
 
             ipArray = [ipCityName, ipLocality, ipCountry, ipLat, ipLng, oneway, compass];
 
@@ -192,7 +198,9 @@
                 oneway = document.getElementById("oneway").checked;
                 compass = document.getElementsByName('compass')[0].value;
                 units = document.getElementsByName('units2')[0].value;
-                relocate("bikeReport.php?cityName=" + frm[0] + "&lat=" + frm[3] + "&lng=" + frm[4] + "&locality=" + frm[1] + "&country=" + frm[2] + "&units=" + units + "&oneway=" + oneway + "&compass=" + compass);
+                ipString = "bikeReport.php?cityName=" + frm[0] + "&lat=" + frm[3] + "&lng=" + frm[4] + "&locality=" + frm[1] + "&country=" + frm[2] + "&units=" + units + "&oneway=" + oneway + "&compass=" + compass;
+                ipString += tripData();
+                relocate(ipString);
             }
 
             // Default cities data: lat, lng, cityName, locality, country
@@ -220,7 +228,11 @@
                 [-77.8500, 166.6667, "McMurdo Station", "", "Antarctica"],
                 [40.8033, -76.3417, "Centralia", "Pennsylvania", "United States"],
                 [51.4056, 30.0569, "Prypiat", "", "Ukraine"],
-                [28.4889, -80.5778, "Cape Canaveral", "Florida", "United States"]
+                [28.4889, -80.5778, "Cape Canaveral", "Florida", "United States"],
+                [36.0544445, -112.1401108, "Grand Canyon", "Arizona", "United States"],
+                [43.87910249999999, -103.4590667, "Mount Rushmore", "", "United States"],
+                [27.98002, 86.921543, "Mount Everest", "", "Nepal"],
+                [21.3069444, -157.8583333, "Honolulu", "Hawaii", "United States"]
             ];
 
             units = frm.units2.value;
@@ -382,8 +394,81 @@
             document.getElementById("report").innerHTML = output;    
         }
 
+        function tripData()
+        {
+            var currentTime = Math.floor((new Date).getTime()/1000);
+            var tripSpeed = 20;
+            var tripStartHours = document.getElementById("recStart").value;
+            nowFlag = 0;
+
+            if(tripStartHours == "NOW")
+            {
+                tripStartHours = 0;
+                nowFlag = 1;
+            }
+            var tripStartDays = document.getElementById("recStartDays").value;
+            var tripStart = currentTime + parseInt(tripStartHours) + parseInt(tripStartDays);
+
+            var tripLengthHours = document.getElementById("recLengthHours").value;
+            var tripLengthDays = document.getElementById("recLengthDays").value;           
+            var tripLength = parseInt(tripLengthHours) + parseInt(tripLengthDays);
+
+            // Validation of startTime and tripLength
+            if((parseInt(tripStart) + parseInt(tripLength)) - currentTime > 518400)
+            {
+                window.alert("Weather forecasts are only available for the next week.  We will give you a forecast covering the last available 24 hours in this period.");
+                if(tripStart + tripLength > 51800)
+                {
+                    tripLength = 0;
+                }
+                tripStart = (currentTime + 518400);
+                //tripLength = 0;
+            }
+
+            // VALIDATE THAT START TIME IS NOT BOTH 'NOW' AND > 0 DAYS.  
+            if(nowFlag == 1 && parseInt(tripStartDays) > 0)
+            {
+                window.alert("You have entered a both 'NOW' and a value for 'days' for a start time.  We will presume this was a mistake and calculate a trip of that many days");
+                tripLength = tripStartDays;
+            }
+
+
+            var tripString = "&tripStart=" + tripStart +  "&tripLength=" + tripLength +  "&tripSpeed=" + tripSpeed;
+            //window.alert("TripString: " + tripString);
+
+            return tripString;
+        }
+
         function relocate(url) {
+            // Need to give user option to do speed in km or mi, but convert from mi to km if that's the choice before submission.
+            // This way the analysis can be done in metric uniformly.
+            url += tripData();
             window.location = url;
+        }
+
+        function didYouMeanLink(cityName, lat, lng, locality, country, i)
+        {
+            // Returns string with a link
+            var linkOutput = "";
+            oneway = document.getElementById("oneway").checked;
+            compass = document.getElementsByName('compass')[0].value;
+            units = document.getElementsByName('units2')[0].value;
+            //url = escapeHtml(url); 
+            linkOutput += "bikeReport.php?cityName=" + escapeHtml(cityName);
+            linkOutput += "&lat=" + lat;
+            linkOutput += "&lng=" + lng;
+            linkOutput += "&locality=" + locality;
+            linkOutput += "&country=" + country;
+            linkOutput += "&units=" + units;
+            linkOutput += "&oneway=" + oneway;
+            linkOutput += "&compass=" + compass;
+
+            linkOutput += tripData();
+
+            relocate(linkOutput);
+
+            // Should not get here
+            return -1;
         }
 
         function didYouMean(didYouMeanCities, units) {
@@ -395,40 +480,18 @@
 
             validCityFlag = 0;
             didYouMeanOutput = "<br/><div class='summaryCell'>";
-            didYouMeanOutput += "<p>Did you mean...?</p>";
+            didYouMeanOutput += "<p><i>Did you mean...?</i></p>";
             didYouMeanOutput += "<p>";
             for(i = 0; i < didYouMeanCities.length; i++)
             {
                 if(typeof(didYouMeanCities[i][2]) != 'undefined')
                 {
-                    oneway = document.getElementById("oneway").checked;
-                    compass = document.getElementsByName('compass')[0].value;
-                    units = document.getElementsByName('units2')[0].value;
                     validCityFlag = 1;
-                    didYouMeanOutput += "<a href='bikeReport.php?cityName=" + didYouMeanCities[i][2];
-                    didYouMeanOutput += "&lat=" + didYouMeanCities[i][0];
-                    didYouMeanOutput += "&lng=" + didYouMeanCities[i][1];
-                    didYouMeanOutput += "&locality=" + didYouMeanCities[i][3];
-                    didYouMeanOutput += "&country=" + didYouMeanCities[i][4];
-                    didYouMeanOutput += "&units=" + units;
-                    didYouMeanOutput += "&oneway=" + oneway;
-                    didYouMeanOutput += "&compass=" + compass;
-                    didYouMeanOutput += "'>";
+                    didYouMeanOutput += "<button type='button' id='linkButton" + didYouMeanCities[i][2] + didYouMeanCities[i][3] + "' onclick=\"didYouMeanLink(";
+                    didYouMeanOutput += "'" + didYouMeanCities[i][2]+ "','";
+                    didYouMeanOutput += didYouMeanCities[i][0] + "','" + didYouMeanCities[i][1] + "','" + didYouMeanCities[i][3] + "','"+ didYouMeanCities[i][4] + "'," + i + ")\" >" + didYouMeanCities[i][2] + "," + didYouMeanCities[i][3] + "," + didYouMeanCities[i][4] + "</button>";
 
-                    if(didYouMeanCities[i][2])
-                    {
-                        didYouMeanOutput += didYouMeanCities[i][2] + ", ";
-                    }
-                    if(didYouMeanCities[i][3])
-                    {
-                        didYouMeanOutput += didYouMeanCities[i][3] + ", ";
-                    }
-                    if(didYouMeanCities[i][4])
-                    {
-                        didYouMeanOutput += didYouMeanCities[i][4];
-                    }
-
-                    didYouMeanOutput += "</a><br/><br/>"; 
+                    didYouMeanOutput += "<br/><br/>\n";
                 }
             }
             didYouMeanOutput += "</p></div>";
@@ -457,41 +520,50 @@
         <div class='summaryTable'>
             <div class='summaryRow' style='text-align: center;'>
                     <br/>
-                    <h4>Bike Report provides weather, forecast and analysis of cycling conditions in whatever area you specify.</h4>
+                    <h4>Bike Report provides weather, forecast, and analysis of biking conditions wherever you are.</h4>
             </div><!--summaryRow-->
         </div><!--summaryTable-->
         <br/>
+
         <div id='newFormBox'>
             <form>
                 <div class='summaryTable'>
                     <div class='summaryRow'>
-                        <div id='left'>
+                        <div id='leftLanding'>
                             <div class='inputCell'>
                                 <select name="units2" id="units2">
                                     <option value="CA">Metric   (km/C)</option>
                                     <option value="US">Imperial (mi/F)</option>
                                     <option value="UK">Mixed    (mi/C)</option>
                                 </select>  <h4>Units</h4>
+                            <br/><br/>
+                            <div id='recommendStartHours' class='inputCellBottom'></div>
+                            <div id='recommendStartDays' class='inputCellBottom'></div>                            
+
                             <!--inputCell--></div>
                             <div class='inputCell' style="padding-left: 20px;">
                                 <input type="checkbox" id="oneway" name="oneway" value="oneway" style="padding-left: 20px;"><h4>One-way trip</h4>
                                 <select name="compass" id="compass">
-                                    <option value="0"><b>N</b></option>
+                                    <option value="0">N</option>
                                     <option value="45">NE</option>
-                                    <option value="90"><b>E</b></option>
+                                    <option value="90">E</option>
                                     <option value="135">SE</option>
-                                    <option value="180"><b>S</b></option>
+                                    <option value="180">S</option>
                                     <option value="225">SW</option>
-                                    <option value="270"><b>W</b></option>
+                                    <option value="270">W</option>
                                     <option value="315">NW</option>
                                 </select>
+                                <br/><br/>
+                            <div id='recommendHours' class='inputCellBottom'></div>
+                            <div id='recommendDays' class='inputCellBottom'></div>
+
                             <!--inputCell--></div>
                         </div><!--left-->
 
-                        <div id='right'>
-                            <span id='userIP2'>
+                        <div id='rightLanding'>
+                            <!--<span id='userIP2'>-->
                                 <div id="userIP"></div>
-                            </span>
+                            <!--</span>-->
                         </div><!--right-->
                     </div><!--units, IP output-->
                 </div><!--summaryTable-->
@@ -499,11 +571,11 @@
                 <div class='summaryTable'>
                     <div class='summaryRow'>
                         <div class='summaryCell'>
-                            <label for='cityDropDown'><h2>Pick a City</h2></label>
+                            <h2><label for='cityDropDown'>Pick a City</label></h2>
                             
                             <select name="cityDropDown" id="cityDropDown" onchange = "interestingDropDown.value = 'default'">
-                                <optgroup label="N America">
                                 <option value="default">Choose...</option>
+                                <optgroup label="N America">
                                 <option value="toronto">Toronto</option>
                                 <option value="new york">New York</option>
                                 <option value="portland">Portland</option>
@@ -533,7 +605,7 @@
                         </div><!--OR1-->
 
                         <div class='summaryCell'>
-                                <label for='cityInput'><h2>Search</h2><br/></label>
+                                <h2><label for='cityInput2'>Search<br/></label></h2>
                                 <input type="text" size="10" name="cityInput" id="cityInput2"><br/>
                         </div><!--Search-->
 
@@ -542,13 +614,24 @@
                         </div><!--OR2-->
 
                         <div class='summaryCell'>
-                            <label for='interestingDropDown'><h2>Explore</h2></label>
+                            <h2><label for='interestingDropDown'>Explore</label></h2>
                             <select name="interestingDropDown" id="interestingDropDown" onchange = "cityDropDown.value = 'default'">
                                 <option value="default">Choose...</option>
+                                <optgroup label="Science">
                                 <option value="mcmurdo station">McMurdo, Antarctica</option>
+                                <option value="cape canaveral">Cape Canaveral</option>
+
+                                <optgroup label="Disaster">
                                 <option value="centralia">Centralia, PA</option>
                                 <option value="prypiat">Prypiat, Ukraine</option>
-                                <option value="cape canaveral">Cape Canaveral</option>
+
+                               <optgroup label="Nature">
+                               <option value="grand canyon">Grand Canyon</option>
+                               <option value="mount rushmore">Mount Rushmore</option>
+                               <option value="mount everest">Mount Everest</option>
+
+                               <optgroup label="Scenic">
+                               <option value="honolulu">Honolulu</option>
                             </select>
                         </div><!--Interesting Places-->
                     </div><!--Three boxes-->
@@ -566,7 +649,7 @@
                 <div class='summaryTable'>
                     <div class='summaryRow'>
                         <div id="report" style='width: 500px; margin: 0 auto;'></div>
-                    </div><!--row-->
+                    </div><!--row--><br/><br/>
                     <div class='summaryRow'>
 
                     </div>
@@ -575,11 +658,149 @@
 
         </div><!--newFormBox-->
 
+
+
         <!--Content--></div>
 
-    <div id='footer'></div>
+    <div id='footer'>Copyright 2014</div>
 
     <!--container--></div>
+
+<script>
+
+    function _formatAMPM(date) {
+        // returns a 12 hour AM/PM time, given date, an integer from 1-24
+        if((date - 12) > 0)
+        {
+            return (date - 12).toString() + "PM";
+        }
+        else
+        {
+            return date + "AM";
+        }
+        return -1;
+    }
+
+    var date = new Date();
+    //var currentTime = date.getTime();
+    var currentTime = Math.floor((new Date).getTime()/1000);
+
+    var currentHour = date.getHours(); // + (getTimeZoneOffset() * 3600);
+    var remainingHours = (24 - currentHour);
+    var currentDay = date.getDay();
+
+    var weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    var ret = [];
+    var retTemp = [];
+
+    for(var i = 0; i <= remainingHours; i++)
+    {
+        retTemp.push(currentTime + (i * 3600));
+        retTemp.push(_formatAMPM(currentHour + i));
+        ret.push(retTemp);
+        retTemp = [];
+    }
+
+    retTemp = [];
+
+    for(i = 0; i <= currentDay; i++)
+    {
+        dayToMove = weekdays.shift();
+        if(weekdays[currentDay] == weekdays[i])
+        {
+            break;
+        }
+        weekdays.push(dayToMove);
+    }
+    for(i = 0; i < weekdays.length; i++)
+    {
+        retTemp.push(currentTime + (i * 86400));
+        retTemp.push(weekdays[i]);
+        ret.push(retTemp);
+        retTemp = [];
+    }
+
+    var recommendStartHours = " <b>Starting</b><br/><select id='recStart'>\n";
+    var recommendStartDays = "<select id='recStartDays'>\n";
+    var recommendLengthHours = "<b>Length</b><br/><select id='recLengthHours'>\n";
+    var recommendLengthDays = "<select id='recLengthDays'>\n";
+    recommendDays += "<option value='0'>0</option>\n";
+    for(i = 0; i < 25; i++) // Populate start-times with hours
+    {
+        if(i == 0)
+        {
+            recommendStartHours += "<option value='" + "NOW" + "'"; 
+            recommendStartHours += "selected='selected'";
+            recommendStartHours += ">Now</option>\n";
+            recommendStartHours += "<option value='" + 0 + "'"; 
+            recommendStartHours += ">0 hours</option>\n";
+
+            recommendLengthHours += "<option value='" + 0 + "'"; 
+            recommendLengthHours += ">0 hours</option>\n";
+        }
+        else if(i == 1)
+        {
+            recommendStartHours += "<option value='" + (i*3600) + "'"; 
+            recommendStartHours += ">1 hour</option>\n";
+
+            recommendLengthHours += "<option value='" + (i*3600) + "'"; 
+            recommendLengthHours += "selected='selected'";
+            recommendLengthHours += ">1 hour</option>\n";       
+        }
+        else
+        {
+            recommendStartHours += "<option value='" + (i*3600) + "'"; 
+            recommendStartHours += ">" + String(i) + " hours</option>\n";
+            //window.alert("start hours: " + recommendStartHours);
+
+            recommendLengthHours += "<option value='" + (i*3600) + "'"; 
+            recommendLengthHours += ">" + String(i) + " hours</option>\n";
+        }
+    }
+
+    for(i = 0; i < 7; i++) // Populate start-times with days
+    {
+        if(i == 0)
+        {
+            recommendStartDays += "<option value='" + (i*86400) + "'";
+            recommendStartDays += "selected='selected'";
+            recommendStartDays += ">" + String(i) + " days</option>\n";            
+
+            recommendLengthDays += "<option value='" + (i*86400) + "'";
+            recommendLengthDays += "selected='selected'";
+            recommendLengthDays += ">" + String(i) + " days</option>\n";
+        }
+        else
+        {
+            recommendStartDays += "<option value='" + (i*86400) + "'";
+            recommendStartDays += ">" + String(i) + " days</option>\n";
+
+            recommendLengthDays += "<option value='" + (i*86400) + "'";
+            recommendLengthDays += ">" + String(i) + " days</option>\n";
+        }
+    }
+    recommendStartHours += "</select>";
+    recommendStartDays += "</select>";
+    recommendLengthHours += "</select>";
+    recommendLengthDays += "</select>";
+
+    document.getElementById("recommendStartHours").innerHTML = recommendStartHours; 
+    document.getElementById("recommendStartDays").innerHTML = recommendStartDays;
+    document.getElementById("recommendHours").innerHTML = recommendLengthHours; 
+    document.getElementById("recommendDays").innerHTML = recommendLengthDays; 
+</script>
+
+<!--Google Analytics-->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-57342744-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
 
 </body>
 </html>

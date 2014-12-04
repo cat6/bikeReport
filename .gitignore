@@ -4,8 +4,14 @@ bikereport.ini
 # Metascore algorithm
 meta.php
 
+# Recomendation algorithm
+recommendation.php
+
 # Project notes
 notes.txt
+
+#Google analytics
+analyticstracking.php
 
 # Windows image file caches
 Thumbs.db

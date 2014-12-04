@@ -12,7 +12,7 @@
 				min-height: 100%;
 			}
 
-			h2 {
+			h2, h3 {
 				display: inline;
 			}
 
@@ -67,6 +67,12 @@
             .inputCell {
                 display: table-cell;
                 width: 50%;
+            }
+
+            .inputCellBottom {
+            	font-size: 100%;
+            	padding: 5px;
+       			background: rgba(255, 255, 255, .2);
             }
 
 			#container
@@ -184,17 +190,24 @@
 				width: 100%;
 			}
 
-			#topContent {
-				width: 100%;
-			}
-
 			#left{
-			    width:40%;
+			    width:20%;
 			    float:left;
 			}
 
 			#right{
-			    width:60%;
+			    width:80%;
+			    float:right;
+			}
+
+			#leftLanding{
+			    width:70%;
+			    float:left;
+			    text-align: center;
+			}
+
+			#rightLanding{
+			    width:30%;
 			    float:right;
 			}
 
@@ -207,7 +220,7 @@
 
 			#topContent
 			{
-				width: 90%;
+				width: 80%;
 				margin-left: auto;
 				margin-right: auto;
 			}
@@ -219,13 +232,12 @@
 				margin-right: auto;
 			}
 
-			#dailySummary
+			#dailySummary, #recommendSummary
 			{
 				text-align: center;
-
 			}
 
-			#weekly, #daily, #dailyTitle
+			#weekly, #daily, #dailyTitle, #recommendTitle
 			{
 				width: 80%;
 				margin-left: auto;
@@ -272,7 +284,6 @@
 				text-align: center;
 				vertical-align: middle;
 				background: rgba(255, 255, 255, .5);
-
 			}
 
 			#bigTemperature h1 { font-size: 250%; }
@@ -349,9 +360,20 @@
 				width: 100%;
 			}
 
+			.summaryRecommendCell {
+				width: 100%;
+				background: rgba(255, 255, 255, .2);
+				border: 3px solid white;
+				padding: 5px;
+			}
+
+			.summaryRecommendCell, li
+			{
+				text-align: left;
+			}
+
 			.spacer {
 				vertical-align: middle;
-
 				text-align: center;
 			}
 

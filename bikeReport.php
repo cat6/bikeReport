@@ -4,6 +4,18 @@
 	Initialization
 */
 
+// Import metascore functionality
+require_once("meta.php");
+
+// Import recommendation functionality
+require_once("recommend.php");
+
+// Import utility functions
+require_once("utilities.php");
+
+// Import weather data collection
+require_once("getData.php");
+
 // Basic Variables
 $cityName = $_GET["cityName"];
 $state = $_GET["locality"];
@@ -13,6 +25,12 @@ $lng = $_GET["lng"];
 $units = $_GET["units"];
 $oneway = $_GET["oneway"];
 $onewayCompass = $_GET["compass"]; 
+// These are the GM unix time input, regardless of where the user is.  Modify on the backend with the offset value.
+$startTime = $_GET["tripStart"];
+$endTime = $_GET["tripLength"];
+
+$tripSpeed = $_GET["tripSpeed"];
+$tripUnits = $units;// $_GET["tripUnits"];
 
 // Scrub variables 
 $cityName = clean($cityName);
@@ -21,9 +39,6 @@ $country = clean($country);
 $lat = clean($lat);
 $lng = clean($lng);
 $units = clean($units);
-
-// Import metascore functionality
-require_once("meta.php");
 
 // Acquire API credentials from an ini file.
 $ini_array = parse_ini_file("bikereport.ini", true);
@@ -39,67 +54,120 @@ $radarKey = $radarKey[0];
 	Functions
 */
 
-function inchesToCM($val)
+function getPrecipInfo($precipType, $precipIntensity, $precipAccumulation, $units)
 {
-	return $val * 2.54;
-}
+	// Returns HTML pertaining to precipitation, intended for the weekly report.
+	$precipOutput = "<b>";
 
-function getPrecipInfo($precipType, $precipIntensity, $units)
-{
 	if($precipType == "rain")
 	{
 		if($units == "US")
 		{
 			// Express rain in inches to one-tenth
-			$precipIntensity = round($precipIntensity, 1);
+			if(round($precipIntensity, 1) < 0.1)
+			{
+				$precipOutput .= "</b>-"; 
+			}
+			else
+			{
+				$precipOutput .= "Rain:</b> " . round($precipIntensity, 1) . " in";				
+			}
 		}
 		else
 		{
 			// Express in mm's
-			$precipIntensity = round(10 * inchesToCM($precipIntensity), 0);
+			if(round(inchesToCM($precipIntensity), 0) < 1)
+			{
+				$precipOutput .= "Rain:</b> Less than 1mm";
+			}
+			else
+			{
+				$precipOutput .= "Rain:</b> " . round(inchesToCM($precipIntensity), 0) . "mm";
+			}
 		}
-		return $precipIntensity;
 	}
-
-	if($precipType == "snow") 
+	elseif($precipType == "snow") 
 	{ 
 		if($units == "US")
 		{	
-			// Express snow to one-tenth of an inch
-			$precipAccumullation = round($precipAccumulation, 1);
+			if(round($precipAccumulation, 1) < 0.1)
+			{
+				$precipOutput .= "Snow:</b> Less than 0.1 in";
+			}
+			else
+			{
+				// Express snow to one-tenth of an inch
+				$precipOutput .= "Snow:</b> " . round($precipAccumulation, 1) . " in";
+			}
 		}
 		else
 		{
 			// Express snow to the nearest cm.  
-			$precipAccumulation = round(inchesToCM($precipAccumulation, 0));
-			if($precipAccumulation < 0)
+			if($precipAccumulation > 0)
 			{
-				$precipAccumulation = "Less than 1cm";
+				$precipOutput .= "Snow:</b> " . round(inchesToCM($precipAccumulation, 0)) . "cm";
+			}
+			else
+			{
+				$precipOutput .= "Snow:</b> Less than 1cm";
 			} 
-			return $precipAccumulation;
 		}
 	}
+	elseif($precipType == "sleet")
+	{
+		$precipOutput .= "Sleet</b>";
+	}
+	elseif($precipType == "hail")
+	{
+		$precipOutput .= "Hail</b>";
+	}
+	else
+	{
+		$precipOutput .= "-</b>";
+	}
+
+	return $precipOutput;
 }
 
-
-
-function makeHourlyReport($json, $units, $hoursToReport)
+function makeHourlyReport($json, $units, $hoursToReport, $startTime, $endTime, $unitSettings, $sunTimes)
 {
 	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
-	$output = "";
+
+	$output = "<br/>";
+
+	// Summary for the next few hours
+	$output .= "<div class='summaryTable' id='recommendTitle'>\n";
+		$output .= "<div class='summaryRow'>\n";
+			$output .= "<div class='summaryRecommendCell' id='recommendSummary'>\n";
+
+			$output .= makeRecommendations($json, $startTime, $endTime, $unitSettings);
+
+			if($sunTimes[0] != -1)
+			{
+				$output .= "<b>Sunrise:</b> " . $sunTimes[0] . " <b>Sunset:</b> " . $sunTimes[1] . "<br/><br/>";
+			}
+			else
+			{
+				$output .= "<b>Sunset:</b> " . $sunTimes[1] . "<br/><br/>";			
+			}
+
+			$output .= "</div><!--dailySummary-->\n";
+		$output .= "</div><!--summaryRow-->\n";
+	$output .= "</div><!--summaryTable-->\n";
 
 	// Summary for the next few hours
 	$output .= "<div class='summaryTable' id='dailyTitle'>\n";
-
-	$output .= "<div class='summaryRow'>\n";
-	$output .= "<div class='summaryTitleCell' id='dailySummary'>\n";
-	$output .= "<h3><b>In the next few hours:  " . $json->hourly->summary . "</b></h3>\n";
-	$output .= "</div><!--hourly summary dayCell-->\n";
-	$output .= "</div><!--hourly summary summaryRow-->\n";
-	$output .= "</div><!--hourly summary summaryTable-->\n";
+		$output .= "<div class='summaryRow'>\n";
+			$output .= "<div class='summaryTitleCell' id='dailySummary'>\n";
+				$output .= "<br/><h3><b>In the next few hours:  " . $json->hourly->summary . "</b></h3><br/><br/>\n";
+			$output .= "</div><!--dailySummary-->\n";
+		$output .= "</div><!--summaryRow-->\n";
+	$output .= "</div><!--summaryTable-->\n";
 
 	$output .= "<div class='summaryTable' id='daily'>\n";
 	$output .= "<div class='summaryRow'>\n";
+
+
 
 	foreach($hoursToReport as $hour)
 	{
@@ -107,9 +175,9 @@ function makeHourlyReport($json, $units, $hoursToReport)
 		$output .= "<h2>" . $hour . "</h2>" . " hours from now: ";
 
 		//metascore
-		$output .= "<h2>" . meta($json, $units, "h{$hour}") . "%</h2><br/><br/>\n";
+		$output .= "<h2>" . meta($json, $units, "h{$hour}", $json->hourly->data[$hour]->time) . "%</h2><br/><br/>\n";
 
-		$output .= "<img src='graphics/icons/" . $json->hourly->data[$hour]->icon . ".png' alt='" . $hour . " hours from now: " . $json->hourly->data[$hour]->icon . "' id='weatherIcon' height='50' width='50'/><br/>";
+		$output .= "<img src='graphics/icons/" . $json->hourly->data[$hour]->icon . ".png' alt='" . $hour . " hours from now: " . $json->hourly->data[$hour]->icon . "' height='50' width='50'/><br/>";
 
 		$output .= "<i>" . $json->hourly->data[$hour]->summary . "</i><br/>\n";
 
@@ -117,414 +185,28 @@ function makeHourlyReport($json, $units, $hoursToReport)
 		$output .= "<h4>Feels like: " . round($json->hourly->data[$hour]->apparentTemperature) . $unitChoices[1] . "&deg;</h4>\n";
 		$output .= "<h4>Wind: " . round($json->hourly->data[$hour]->windSpeed) . 	$unitChoices[2] . " / " . compass($json->hourly->data[$hour]->windBearing) . "</h4>";
 
+		if($json->hourly->data[$hour]->precipType != 'undefined')
+		{
+			if($json->daily->data[$i]->precipAccumulation != 'undefined')
+			{
+				$precipAccumulation = $json->daily->data[$i]->precipAccumulation;
+			}
+			else
+			{
+				$precipAccumulation = "N/A";
+			}
+
+			$output .= getPrecipInfo($json->hourly->data[$hour]->precipType, $json->hourly->data[$hour]->precipIntensity, $precipAccumulation, $units);
+		}
+
 		$output .= "</div><!--day dayCell-->\n";
 	}
 
 	$output .= "</div><!--day summaryRow-->\n";
 	$output .= "</div><!--day summaryTable-->\n";
-	$output .= "<br/><br/>\n";
+	$output .= "<br/>\n";
 
 	return $output;
-}
-
-function getRadarMap($radarKey, $lat, $lng)
-{
-	// Provides a radar
-	$radarHeight = 400;
-	$radarWidth = 600;
-
-	$radius = 100;
-
-	$radarURL = "http://api.wunderground.com/api/";
-	$radarURL .= $radarKey;
-	$radarURL .= "/radar/image.gif?centerlat=" . $lat;
-	$radarURL .= "&#38;centerlong=" . $lng;
-	$radarURL .= "&radius=" . $radius;
-	$radarURL .= "&width=" . $radarWidth;
-	$radarURL .= "&height=" . $radarHeight;
-	$radarURL .= "&newmaps=1";
-
-	// Provides a map 
-	$radarURL = "http://api.wunderground.com/api/" . $radarKey . "/radar/image.gif?centerlat=" . $lat . ";centerlon=" . $lng . "&radius=100&width=280&height=280&newmaps=1";
-
-$radarURL = "http://api.wunderground.com/api/" . $radarKey . "/radar/image.gif?centerlat=" . $lat . "&centerlon=" . $lng . "&radius=20&width=280&height=280&newmaps=1";
-
-	return $radarURL;
-}
-
-function makeCamArray($data, $camAPIKey)
-{
-	// MAKE ENDPOINT URL
-	$lat = $data->latitude;
-	$lng = $data->longitude;
-
-	$endpointCam = "http://api.webcams.travel/rest?method=wct.webcams.list_nearby&lat=";
-	$endpointCam .= $lat;
-	$endpointCam .= "&lng=";
-	$endpointCam .= $lng;
-	$endpointCam .= "&devid=";
-	$endpointCam .= $camAPIKey;
-	$endpointCam .= "&format=json";
-
-	// setup curl to make a call to the endpoint
-	$session = curl_init($endpointCam);
-	// indicates that we want the response back
-	curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
-	// exec curl and get the data back
-	$camData = curl_exec($session);
-
-	// remember to close the curl session once we are finished retrieveing the data
-	curl_close($session);
-
-	// decode the json data to make it easier to parse the php
-	$jsonCam = json_decode($camData);
-	if($search_results === NUL) die('Error parsing json');
-
-	//var_dump($jsonCam);	// TEST
-
-	$camArray = array();	// An array of webcam URLs for the given area
-	for($i = 0; $i < 10; $i++)
-	{
-		if($jsonCam->webcams->webcam[$i]->toenail_url != '')
-		{	
-			array_push($camArray, $jsonCam->webcams->webcam[$i]->toenail_url);
-		}
-	}
-/*
-	// TESTING
-	foreach ($camArray as $cam)
-	{
-		print "test: " . $cam . "\n";
-	}
-*/
-	return $camArray;
-}
-
-function timeStamp($data)
-{
-	$currentTime = $data->currently->time;	// Unix time stamp for local time
-	$localTime = $currentTime + ($data->offset * 3600);	// Adjust time using hours offset
-	return gmdate('D M\ jS, g:ia', $localTime);	// Return a nice string
-}
-
-function periodOfDay($data)
-{
-	// returns 0 for daytime, 1 for dusk, 2 for night, and 3 for dawn
-	$localTime = $data->currently->time + (3600 * $data->offset);
-	$sunriseToday = $data->daily->data[0]->sunrisetime + (3600 * $data->offset);
-	$sunsetToday = $data->daily->data[0]->sunsetTime + (3600 * $data->offset);
-
-	$ret = 0;	// Default; daytime.
-
-	// daytime: local/rise/set: 1415 799469 / -18000 / 1415 811422
-	// rise is negative, set is ahead
-
-	// unit test data
-	// local / sunrise / sunset / ret
-
-	// Day: sunrise is negative (or zero?) and sunset > local
-	// day (1:54pm - toronto)
-	// 1415800456 / -18000 / 1415811422 / 0
-	// day (8:58am - Honolulu)
- 	// 1415782712 / -36000 / 1415814720 / 0
-
-	// night: either both are positive, OR sunrise is 0??
-	// night (6:52pm - london)
-	// 1415818378 / 0 / 1415809043 / -1 
-	// night (3:48am-tokyo)
-	// 1415850538 / 32400 / 1415896665 / 2 
-
-	// dawn: 
-
-	// Dusk: (local < sunset) && ((local + 30 mins) > sunset)
-
-	// 9:16am in apia island
-	// 1415 870184 / 50400 / 1415 907259 / 2
-
-	// dawn? - (palikir island - 6:14am)
-	//1415859283 / 39600 / 1415902051 / 2
-
-	// Two circumstances it could be night.  Before midnight, both sunrise and sunset are behind us
-	// After midnight, both sunrise and sunset are ahead of us
-	if($sunriseToday < 0 && $sunsetToday > 0)
-	{
-		// Day.  Sunrise is a large negative, like -18000.
-		$ret = 0;
-	}
- 	elseif((($localtime < $sunriseToday) && ($localtime < $sunsetToday)) || (($localTime > $sunsetToday) && ($localtime > $sunsetToday))  )
-	{
-		// Night
-		$ret = 2;
-	}
-	elseif($localTime  < ($sunriseToday + 1800))
-	{
-		// Dawn
-		$ret = 3;
-	}
-	elseif(($localTime  < $sunsetToday) && ($localTime  > ($sunsetToday - 1800) ) )
-	{
-		// Dusk
-		$ret = 1;
-	}
-	else
-	{
-		// Should not get here.
-		$ret = -1;
-	}
-
-	// Simple fix for now:
-	if($localTime > $sunriseToday && $localTime < $sunsetToday)
-	{
-		// Day
-		$ret = 0;
-	}
-	else
-	{
-		// night.
-		$ret = 2;
-	}
-
-	//print "local/rise/set/ret: " . $localTime . " / " . $sunriseToday . " / " . $sunsetToday . " / " . $ret . "\n\n";
-	return $ret;
-}
-
-function psaImage($imageName, $alt)
-{
-	// Returns the <img> tag for a PSA image for the page, whose name is $imageName
-	// Functionalizing the process allows for the later possibility of rotating images (e.g. from a hard-coded array
-	// or external source) on a regular basis.
-	// Assumes that $imageName is the name of a valid image in /graphics/psa/, and that $alt is a string of descriptive text.
-	return "<img src='graphics/psa/" . $imageName . "' alt='" . $alt . "' id='psaImage' width='100%' height='100%' />";
-}
-
-function checkAlerts($data)
-{
-	// Returns an array containing [0]: lights-on alerts, [1]: weather alerts
-
-	// Check if it's between 30 mins before dusk and 30 mins after dawn--the legal definition of 'night' for driving/road purposes in Ontario
-	//$currentTime = $data->currently->time;
-	$icon = $data->currently->icon;
-	$lights;
-	$weather;
-	$alerts = array();
-
-	$period = periodOfDay($data);	// 0 for daytime, 1 for dusk, 2 for night, and 3 for dawn
-
-	if($period == 2)    
-	{
-		// Then it's nighttime, before dawn.  
-		$lights = "use lights (night)";
-	}
-	if($period == 3)
-	{
-		// Then it's nighttime, after dusk.
-		$lights = "use lights (dawn)";
-	}
-	if($period == 1)
-	{
-		$lights = "use lights (dusk)";
-	}
-
-	// Check for fog--append to any existing 
-	if($icon == "fog")
-	{
-		if($lights != "")
-		{
-			$lights .= ", fog.";	
-		}
-		else
-		{
-			$lights = "use Lights (fog)";
-		}
-	}
-
-	$weather = "";	// Placeholder until weather alerts are implemented
-
-	array_push($alerts, $lights, $weather);
-
-	return $alerts;
-}
-
-function thermometer($units)
-{
-	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
-	$thermometerOutput = "
-	<script>
-		/**
-		 * Thermometer Progress meter.
-		 * This function will update the progress element in the \"thermometer\"
-		 * to the updated percentage.
-		 * If no parameters are passed in it will read them from the DOM
-		 *
-		 * @param {Number} goalAmount The Goal amount, this represents the 100% mark
-		 * @param {Number} progressAmount The progress amount is the current amount
-		 * @param {Boolean} animate Whether to animate the height or not
-		 *
-		 */
-		function thermometer(id, goalAmount, progressAmount, animate) {
-		    \"use strict\";
-
-		    var \$thermo = \$(\"#\"+id),
-		        \$progress = \$(\".progress\", \$thermo),
-		        \$goal = \$(\".goal\", \$thermo),
-		        percentageAmount,
-		        isHorizontal = \$thermo.hasClass(\"horizontal\"),
-		        newCSS = {};
-
-		    goalAmount = goalAmount || parseFloat( \$goal.text() ),
-		    progressAmount = progressAmount || parseFloat( \$progress.text() ),
-		    percentageAmount =  Math.min( Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
-
-		    //let\"s format the numbers and put them back in the DOM
-		    \$goal.find(\".amount\").text( goalAmount +";
-
-    $thermometerOutput .= "\"" . $unitChoices[1] . "\" );";
-    $thermometerOutput .= "\$progress.find(\".amount\").text( progressAmount +";
-    $thermometerOutput .= "\"" . $unitChoices[1] . "\" );";
-
-	$thermometerOutput .= "
-	    //let\"s set the progress indicator
-	    \$progress.find(\".amount\").hide();
-
-	    newCSS[ isHorizontal ? \"width\" : \"height\" ] = percentageAmount + \"%\";
-
-	    if (animate !== false) {
-	        \$progress.animate( newCSS, 1200, function(){
-	            \$(this).find(\".amount\").fadeIn(500);
-	        });
-	    }
-	    else {
-	        \$progress.css( newCSS );
-	        \$progress.find(\".amount\").fadeIn(500);
-	    }
-	}
-
-	\$(document).ready(function(){
-	    thermometer(\"thermo1\");
-	});
-	</script>
-		";
-
-	$thermometerOutput = "";
-
-	$thermometerOutput .= "   <script>
-        //Based originally on a positive-only \"fundraising\" type thermometer by \"Geeky John\" http://jsfiddle.net/GeekyJohn/vQ4Xn/
-
-
-        function percentage(goalAmount, minAmount, progressAmount) {
-            var range, compensated, percentageAmount;
-
-            range = (goalAmount + 274) - (minAmount + 274);
-            compensated = (progressAmount + 274) - (minAmount + 274);
-            percentageAmount = (progressAmount + 274) - (minAmount + 274) / range;
-
-            percentageAmount = compensated / range;
-            percentageAmount = percentageAmount * 100;
-
-            return percentageAmount;
-        }
-        /**
-         * Thermometer Progress meter.
-         * This function will update the progress element in the \"thermometer\"
-         * to the updated percentage.
-         * If no parameters are passed in it will read them from the DOM
-         *
-         * @param {Number} goalAmount The Goal amount, this represents the 100% mark
-         * @param {Number} progressAmount The progress amount is the current amount
-         * @param {Boolean} animate Whether to animate the height or not
-         *
-         */
-        function thermometer(unitChoice, goalAmount, progressAmount, minAmount, animate) {
-            \"use strict\";
-
-            var \$thermo = \$(\"#thermometer\"),
-                \$progress = \$(\".progress\", \$thermo),
-                \$goal = \$(\".max\", \$thermo),
-                \$min = \$(\".min\", \$thermo),
-                \$mid = \$(\".mid\", \$thermo),
-                percentageAmount, minHeight,
-                compensated, midAmount, range, rangePercent;
-
-            // Metric units by default
-            unitChoice = unitChoice || 'C';
-
-            // Adjustment value for the midline marker line (typically the zero on a thermometer)
-            // Change this to move your 'zero' value up or down the thermometer to compensate for size changes
-            var minAdjust = -25;
-
-            // Animate by default
-            var animate = typeof Boolean !== 'undefined' ? animate : true;
-
-            goalAmount = goalAmount || parseFloat(\$goal.text()),
-            minAmount = minAmount || parseFloat(\$min.text()),
-            midAmount = midAmount || parseFloat(\$mid.text()),
-            progressAmount = progressAmount || parseFloat(\$progress.text()),
-            percentageAmount = Math.min(Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
-
-            //let's format the numbers and put them back in the DOM
-            \$goal.find(\".amount\").text(goalAmount + unitChoice);
-            \$progress.find(\".amount\").text(progressAmount + unitChoice);
-            \$mid.find(\".amount\").text(midAmount + unitChoice);
-            \$min.find(\".amount\").text(minAmount + unitChoice);
-
-            percentageAmount = percentage(goalAmount, minAmount, progressAmount);
-
-            minHeight = percentage(goalAmount, minAmount, 0);
-
-            $(\"#thermometer .mid\").css(\"bottom\", ((minHeight + minAdjust) + \"%\")); 
-
-            //let's set the progress indicator
-            \$progress.find(\".amount\").hide();
-            
-            if (animate !== false) {
-                \$progress.animate({
-                    \"height\": percentageAmount + \"%\"
-                }, 1200, function () {
-                    \$(this).find(\".amount\").fadeIn(500);
-                });
-            } else {
-                \$progress.css({
-                    \"height\": percentageAmount + \"%\"
-                });
-                \$progress.find(\".amount\").fadeIn(500);
-            }
-        }
-
-        \$(document).ready(function () 
-        {
-            // Call thermometer() without arguments to have it read from the DOM
-            thermometer('" . $unitChoices[1] . "');
-            // ...or with parameters if you want to update it using JavaScript.
-            // You can update live, and choose whether to show the animation
-            // (you might not if the updates are relatively small).
-            //thermometer(50, -21, -30, true);
-        });
-    </script>";
-
-	return $thermometerOutput;
-}
-
-function bookmarkMe()
-{
-	$bookmarkMeOutput = "
-		<script>
-		// Credit: http://stackoverflow.com/questions/10033215/add-to-favorites-button
-    	\$(function() {
-	        \$('#bookmarkme').click(function() {
-	            if (window.sidebar && window.sidebar.addPanel) { // Mozilla Firefox Bookmark
-	                window.sidebar.addPanel(document.title,window.location.href,'');
-	            } else if(window.external && ('AddFavorite' in window.external)) { // IE Favorite
-	                window.external.AddFavorite(location.href,document.title); 
-	            } else if(window.opera && window.print) { // Opera Hotlist
-	                this.title=document.title;
-	                return true;
-	            } else { // webkit - safari/chrome
-	                alert('Press ' + (navigator.userAgent.toLowerCase().indexOf('mac') != - 1 ? 'Command/Cmd' : 'CTRL') + ' + D to bookmark this page.');
-	            }
-	        });
-    	});
-		</script>";
-	return $bookmarkMeOutput;
 }
 
 function startUntilBody($cityName, $lat, $lng)
@@ -533,11 +215,11 @@ function startUntilBody($cityName, $lat, $lng)
 	<head>
 		<title>The " . $cityName . " Bike Report</title>\n
 	 	<meta charset='UTF-8'>
+    	<meta name=\"Description\" content=\"Bike Report provides weather, forecast and analysis of biking conditions wherever you are.\"/>
 	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-160x160.png\" sizes=\"160x160\">
 	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-96x96.png\" sizes=\"96x96\">
 	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-16x16.png\" sizes=\"16x16\">
 	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-32x32.png\" sizes=\"32x32\">
-
 
 		<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
 		<!-- Tiny Carousel for webcams-->
@@ -547,7 +229,7 @@ function startUntilBody($cityName, $lat, $lng)
 		<!-- Google line graph -->
 		<script type='text/javascript' src='https://www.google.com/jsapi'></script>
 
-		<link href='http://fonts.googleapis.com/css?family=Playfair+Display|Droid+Serif' rel='stylesheet' type='text/css'>
+		<link href='http://fonts.googleapis.com/css?family=Playfair+Display%7CDroid+Serif' rel='stylesheet' type='text/css'>
 
 		<link rel='stylesheet' href='styles/tinycarousel.css' type='text/css' media='screen'/>
 
@@ -562,175 +244,6 @@ function startUntilBody($cityName, $lat, $lng)
 		</script>
 ";
 	return $startUntilBodyOutput;
-}
-
-function speedUnits($units)
-{
-	// Returns appropriate speed display string, given $units.
-	if($units == "CA")
-	{
-		return "km/hr";
-	}
-	if($units == "US")
-	{
-		return "mph";
-	}
-	if($units == "UK")
-	{
-		return "mph";
-	}
-	// Should not get here.  Error.
-	return -1;
-}
-
-function tempUnits($units)
-{
-	// Returns appropriate temperature display string, given $units.
-	if($units == "CA")
-	{
-		return "C";
-	}
-	if($units == "US")
-	{
-		return "F";
-	}
-	if($units == "UK")
-	{
-		return "C";
-	}
-	// Should not get here.  Error.
-	return -1;
-}
-
-function rotateArrow($windBearing)
-{
-	$rotateArrowOutput = "<script>";
-	$rotateArrowOutput .= "$(document).ready(function(){";
- 	$rotateArrowOutput .= "$('#windArrow').rotate(" . ($windBearing + 180). ");";
-	$rotateArrowOutput .= "});";
-	$rotateArrowOutput .= "</script>";
-
-	$rotateArrowOutput .= "<img src='graphics/redArrow.png' alt='Wind Direction Arrow' id='windArrow'/><br/>";
-
-	return $rotateArrowOutput;
-}
-
-function makeGraph($points)
-{
-	$graphOutput = "<script>
-      google.load('visualization', '1', {packages:['corechart']});
-      google.setOnLoadCallback(drawChart);
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable([
-          ['Day', 'Score'],
-          ";
-    // Pop off first element of $ponits--it's the starting weekday of the chart
-    $startDay = array_shift($points);
-
-    // Build an array of weekday names by reordering an extant array starting at sunday
-	$weekdays = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
-
-	// Reorder the array so today is first 
-	for($i = 0; $i < $startDay; $i++)
-	{
-		$replace = array_shift($weekdays);
-		$weekdays[] = $replace;
-	}
-
-    // Foreach over remaining $points and add to the graph array
-    $i = 0;
-    foreach($points as $point)
-    {
-    	$graphOutput .= "['" . $weekdays[$i] . "', " . $point . "],";
-    	$i++;
-    }
-    // Pop the last char off of $graphOutput so there's no trailing comma
-    $graphOutput = substr($graphOutput, 0, -1);
-
-    	/* Example
-          ['2004',  1000],
-          ['2005',  1170],
-          ['2006',  660],
-          ['2007',  103]
-		*/
-    $graphOutput .= "]);
-
-        var options = {
-        title: 'Cycling Conditions This Week',
-        fontName: 'Crimson+Text',
-        titleTextStyle: {color: '#FAEBD7'},
-        series: { 0:{ color: '#FAEBD7'} },
-        lineWidth: 7,
-        curveType: 'function',
-        backgroundColor:{fill:'#72A0C1', stroke:'#F0F8FF'},
-        chartArea:{backgroundColor:'#5D8AA8', width:'100%'},
-        vAxis:{ maxValue: 100, minValue: 0, textStyle:{color:'#FAEBD7'}, gridlines:{color:'#7B9DB5'} },
-        hAxis:{ maxValue: 100, minValue: 0, textStyle:{color:'#FAEBD7'} },
-       	legend:{position: 'none'},
-        };
-
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-       
-        chart.draw(data, options);
-      }
-    </script>";
-	return $graphOutput;
-}
-
-function unitChoice($units)
-{
-	// Returns variables for $endpoint and temp/speed terminology; assumes a valid unit choice.
-	// Return format: $ret($endpoint, $tempSuffix, $speedSuffix)
-	$ret = array();
-
-	if($units == "CA")
-	{
-		array_push($ret, "?units=ca", "C", "km/hr");
-	}
-	if($units == "US")
-	{
-		array_push($ret, "?units=us", "F", "mph");
-	}
-	if($units == "UK")
-	{
-		array_push($ret, "?units=uk", "C", "mph");
-	}
-	if($units != "CA" && $units != "US" && $units != "UK")
-	{
-		// Should not get here.  Return an error if input is incorrect.
-		return -1;
-	}
-	return $ret;
-}
-
-function convertSpeed($speed)
-{
-	// Converts speed (and distance) from mph to km/hr
-	return $speed * 1.6;
-}
-
-function convertTemp($temperature)
-{
-	// Converts temperature from F to C
-	return ($temperature - 32) * (5/9);
-}
-
-function clean($str)
-{
-	// Returns a tidied-up string to prevent script injection, CX attacks, etc.; takes in a raw-input string, $str.
-	$str = mb_convert_encoding($str, "UTF-8", "UTF-8");
-	$str = htmlentities($str, ENT_QUOTES, "UTF-8");
-	return $str;
-}
-
-function compass($degrees)
-{
-	// Returns a string representing a compass direction, as based upon an input degree value, $degrees.  Assumes $degrees does not exceed 360.
-	$compass = array("N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW", "N");
-	$compCount = round($degrees / 22.5);
-	$compdir = $compass[$compCount];
-
-	return $compdir;
 }
 
 function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway, $onewayCompass)
@@ -749,10 +262,9 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 	// Look for webcams.  If any are in the area, then present a carousel.  Otherwise, present a psa message.
 	$camArray = makeCamArray($json, $camAPIKey);
 
-	$reportOutput .= "<div class='summaryTable'>\n";
-
 	if($camArray[0] != '')
 	{
+		$reportOutput .= "<div class='summaryTable'>\n";
 		$reportOutput .= "<div class='summaryRow'>\n";
 		$reportOutput .= "	<div class='summaryTitleCell'>
 								<div id='slider1'> ";
@@ -779,30 +291,39 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 										{
 											if($camArray[$i] != '')
 											{
-												$reportOutput .= "<li><img src='" . $camArray[$i] . "' /></li>";
+												$reportOutput .= "<li><img src='" . $camArray[$i] . "' alt='webcam image' /></li>";
 											}
 										}
 										$reportOutput .= "
 										</ul>
-									</div><!--overview-->";
+									</div><!--viewport-->";
 								if(sizeof($camArray) < 5)
 								{
 									$reportOutput .= "<a class='buttons next' href='#'>&gt;</a>";
 								}
 
-				$reportOutput .= "</div><!--viewport-->
-							</div><!--slider1-->";
-		$reportOutput .= "</div><!--summaryTitleCell-->\n";
+				$reportOutput .= "</div><!--slider1-->
+							</div><!--summaryTitleCell-->";
+		$reportOutput .= "</div><!--summaryRow-->\n";
+		$reportOutput .= "</div><!--summaryTable-->\n";
 	}
-
-	$reportOutput .= "</div><!--summaryTable-->\n";
 
 	$reportOutput .= "<div class='summaryTable'>\n";
 		$reportOutput .= "<div class='summaryRow'>\n";
 			$reportOutput .= "<div class='summaryTitleCell' id='weeklySummary'>\n";
-			$reportOutput .= "<h3><b>Weekly Summary: </b>" . $weeklySummary. "</h3>";
+			$reportOutput .= "<h3><b>Weekly Summary: </b>" . $weeklySummary. "</h3><br/>";
 			$reportOutput .= "</div><!--summaryTitleCell-->\n";
 		$reportOutput .= "</div><!--summaryRow-->\n";
+
+		$reportOutput .= "<div class='summaryRow'>\n";
+			$reportOutput .= "<div class='summaryTitleCell' style='width: 80%; margin-left:auto; margin-right:auto;'>\n";
+				$reportOutput .= "<div id='chart_div' style='width: 100%;'></div>\n";
+			$reportOutput .= "</div><!--summaryTitleCell-->\n";
+		$reportOutput .= "</div><!--summaryRow-->\n";
+
+	$reportOutput .= "</div><!--summaryTable-->\n";
+
+
 	$reportOutput .= "</div><!--summaryTable-->\n";
 
 	$reportOutput .= "<div class='summaryTable' id='weekly'>\n";
@@ -817,11 +338,11 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 		{
 			if($oneway === "true")
 			{
-				array_push($metaArray, meta($json, $units, "d{$i}", $onewayCompass));
+				array_push($metaArray, meta($json, $units, "d{$i}", $json->daily->data[$i]->time, $onewayCompass));
 			}
 			else
 			{
-				array_push($metaArray, meta($json, $units, "d{$i}"));
+				array_push($metaArray, meta($json, $units, "d{$i}", $json->daily->data[$i]->time));
 			}
 		}
 		else
@@ -847,11 +368,11 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 					$metaFlag = "d" . $i;
 					if($oneway === "true")
 					{
-						$reportOutput .= "<b>" . $weekdaysShort[$today] . ": </b>" .  meta($json, $units, $metaFlag, $onewayCompass) . "%<br/>\n";	// weekday
+						$reportOutput .= "<b>" . $weekdaysShort[$today] . ": </b>" .  meta($json, $units, $metaFlag, $json->daily->data[$i]->time, $onewayCompass) . "%<br/>\n";	// weekday
 					}
 					if($oneway === "false")
 					{
-						$reportOutput .= "<b>" . $weekdaysShort[$today] . ": </b>" .  meta($json, $units, $metaFlag) . "%<br/>\n";	// weekday
+						$reportOutput .= "<b>" . $weekdaysShort[$today] . ": </b>" .  meta($json, $units, $metaFlag, $json->daily->data[$i]->time) . "%<br/>\n";	// weekday
 					}
 				}
 				else
@@ -867,11 +388,11 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 					$metaFlag = "d" . $i;
 					if($oneway === "true")
 					{
-					$reportOutput .= "<b>" . $weekdaysShort[$today - 7] . ": </b>" .  meta($json, $units, $metaFlag, $onewayCompass) . "%<br/>\n";	// weekday
+					$reportOutput .= "<b>" . $weekdaysShort[$today - 7] . ": </b>" .  meta($json, $units, $metaFlag, $json->daily->data[$i]->time, $onewayCompass) . "%<br/>\n";	// weekday
 					}
 					if($oneway === "false")
 					{
-						$reportOutput .= "<b>" . $weekdaysShort[$today - 7] . ": </b>" .  meta($json, $units, $metaFlag) . "%<br/>\n";	// weekday
+						$reportOutput .= "<b>" . $weekdaysShort[$today - 7] . ": </b>" .  meta($json, $units, $metaFlag, $json->daily->data[$i]->time) . "%<br/>\n";	// weekday
 					}
 				}
 				else
@@ -886,6 +407,17 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 			$reportOutput .= round($week[$i][1]) . " " . $unitChoices[2] . " / " . compass($week[$i][2]) . "<br/><br/>\n";
 
 			$reportOutput .= "Feels like:<br/>" . $json->daily->data[$i]->apparentTemperatureMin . "&deg;" . $unitChoices[1] . " to " . $json->daily->data[$i]->apparentTemperatureMax . "&deg;" . $unitChoices[1] . "<br/><br/>\n";
+
+			if($json->daily->data[$i]->precipAccumulation != 'undefined')
+			{
+				$precipAccumulation = $json->daily->data[$i]->precipAccumulation;
+			}
+			else
+			{
+				$precipAccumulation = "N/A";
+			}
+
+			$reportOutput .= getPrecipInfo($week[$i][3][3], $json->daily->data[$i]->precipIntensity, $precipAccumulation, $units) . "<br/><br/>";
 
 			$reportOutput .=  "<b>" . $week[$i][0] . "</b><br/>\n";
 		$reportOutput .= "</div><!--dayCell-->\n";
@@ -905,15 +437,13 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 	Collect Weather Data
 */
 
-// Construct the query with our apikey and the query we want to make.
-$endpoint = "https://api.forecast.io/forecast/" . $weatherAPIKey . "/" . $lat . "," . $lng;
-
 // Modify units based on CA (canada), UK, or US (default if not modified).  SI available, but not used here.
+// This must be done before weather data collection in order to request data in the proper temperature units (F or C)
 $unitSettings = unitChoice($units);
 
 if($unitSettings != -1)
 {
-	$endpoint .= $unitSettings[0];
+	$endpointUnits = $unitSettings[0];
 	$tempSuffix = $unitSettings[1];
 	$speedSuffix = $unitSettings[2];
 }
@@ -935,26 +465,13 @@ else
 }
 $thermoMidValue = 0;
 
-
-// setup curl to make a call to the endpoint
-$session = curl_init($endpoint);
-
-// indicates that we want the response back
-curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
-
-// exec curl and get the data back
-$data = curl_exec($session);
-
-// remember to close the curl session once we are finished retrieveing the data
-curl_close($session);
-
-// decode the json data to make it easier to parse the php
-$json = json_decode($data);
-if ($search_results === NUL) die('Error parsing json');
+$json = collectWeatherData($weatherAPIKey, $lat, $lng, $endpointUnits);
 
 /*
 	Parse Weather Data
 */
+
+$sunTimes = getSunUpDownTimes($json);
 
 // Today's weather
 $currently = $json->currently->summary;
@@ -979,6 +496,7 @@ $nextDayTempMin = $json->daily->data[1]->temperatureMin;
 		[i][3][0]: intensity
 		[i][3][1]: max
 		[i][3][2]: probability
+		[i][3][3]: type
 	[i][4]: Temperature(whole): 
 		[i][4][0]: tempMin
 		[i][4][1]: tempMax
@@ -1001,6 +519,15 @@ for($i = 0; $i < 7; $i++)
 	$dailyWeather[3][0] = $json->daily->data[$i]->precipIntensity;
 	$dailyWeather[3][1] = $json->daily->data[$i]->precipIntensityMax;
 	$dailyWeather[3][2] = $json->daily->data[$i]->precipProbability;
+
+	if($json->daily->data[$i]->precipType != "") // $json->daily->data[$i]->precipType != 'undefined'
+	{
+		$dailyWeather[3][3] = $json->daily->data[$i]->precipType;
+	}
+	else
+	{
+		$dailyWeather[3][3] = "Clear";
+	}
 
 	$dailyWeather[4][0] = $json->daily->data[$i]->temperatureMin;
 	$dailyWeather[4][1] = $json->daily->data[$i]->temperatureMax;
@@ -1026,28 +553,30 @@ $output = "";
 
 $output .= startUntilBody($cityName, $lat, $lng);
 
+$output .= "</head>\n";
+$output .= "<body>\n";
+
+// Google analytics
+$output .= "<?php include_once(\"analyticstracking.php\") ?>";
+
 $output .= "<div id='container'>\n";
 	$output .= bookmarkMe();
 
 	// Header
-	$output .= "<div id='header' style='background-image: url(https://maps.googleapis.com/maps/api/staticmap?center=" . ($lat - 0.12) . "," . $lng . "&zoom=11&size=600x600);'>\n";
+	$output .= "<div id='header' style='background-image: url(https://maps.googleapis.com/maps/api/staticmap?center=" . ($lat - 0.12) . "," . $lng . "&amp;zoom=11&amp;size=600x600);'>\n";
 	$output .= "<h1>Bike Report: " . $cityName . "</h1>\n";
 	$output .= "<!--header--></div>\n";
+
 	$output .= "<div id='navigation'>\n";
 	$output .= "<ul>\n";
 	$output .= "<li id='navDate'>" . timeStamp($json) . "</li>";
 
-	// Alerts
-	// [0]: light-related alert message, [1]: weather-related alert message
-	$todayAlerts = checkAlerts($json);
-	if($todayAlerts[0] != "")
-	{		
-		$output .= "<li id='navAlert'>Warning: " . $todayAlerts[0] . "</li>";
-	}
-
 	$output .= "<li><a href='index.html' title='Try Another City'>Try Another City</a></li>";
 
-//	$output .= "<li><a target='_blank' href='" . getRadarMap($radarKey, $json->latitude, $json->longitude) . "' title='Radar'>Radar</a></li>"; // Weather radar map.
+	if($country == "Canada" || $country == "United States")
+	{
+		$output .= "<li><a target='_blank' href='" . getRadarMap($radarKey, $json->latitude, $json->longitude) . "' title='Radar'>Radar</a></li>"; // Weather radar map.
+	}
 
 	$output .= "<li><a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area'>Bike-friendly routes: " . $cityName . "</a></li>\n";
 	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark</a></li>";
@@ -1065,7 +594,8 @@ $output .= "<div id='container'>\n";
 
 		$output .= "<div id='left'>\n";
 		$output .= $weekAndGraph[0]; // Print out the graph code		
-		$output .= "<div id='chart_div' style='width: 90%;'></div>\n";
+		$output .= "<h1>Right now:</h1>\n";
+
 		$output .= "<!--left--></div>\n";
 
 		$output .= "<div id='right'>\n";
@@ -1079,11 +609,11 @@ $output .= "<div id='container'>\n";
 						{
 							if($oneway === "true")
 							{
-								$output .= "<h1>" . meta($json, $units, 0, $onewayCompass) . "&#37; </h1>";
+								$output .= "<h1>" . meta($json, $units, 0, $json->currently->time, $onewayCompass) . "&#37; </h1>";
 							}
 							if($oneway === "false")
 							{
-								$output .= "<h1>" . meta($json, $units, 0) . "&#37; </h1>";
+								$output .= "<h1>" . meta($json, $units, 0, $json->currently->time) . "&#37; </h1>";
 							}
 						}
 						else
@@ -1092,7 +622,7 @@ $output .= "<div id='container'>\n";
 						}
 
 						$output .= "<b>Overall</b>\n";
-						$output .= "<!--topCell(meta)--></div>\n";
+						$output .= "<!--topCell(bigMeta)--></div>\n";
 
 
 					if($units == "UK" or $units == "CA")
@@ -1111,6 +641,7 @@ $output .= "<div id='container'>\n";
 					$output .= "            
 						<div id=\"thermometer\">
                 			<div class=\"track\">
+
                     			<div class=\"max\">
                         			<div class=\"amount\">" . $thermoMaxValue . "</div>
                     			</div>
@@ -1120,30 +651,31 @@ $output .= "<div id='container'>\n";
                     			</div>
                     			
                     			<div class=\"progress\">
-                        			<div class=\"amount\" style=\"display: block;\">" .
-                                       round($temperature)
+                        			<div class=\"amount\" style=\"display: block;\">" . round($temperature) 
                         			. "</div>
                     			</div>
+
                     			<div class=\"min\">
                         			<div class=\"amount\">" . $thermoMinValue . "</div>
                     			</div>
+
                 			</div>
             			</div>";
 
 					$output .= thermometer($units);
-					$output .= "<b>Temperature</b>\n";
-					$output .= "<!--topCell(thermo)--></div>\n";
+					$output .= "<b>Temperature</b><br/><small>Apparent Temp: " . round($json->currently->apparentTemperature) . $tempSuffix  . "</small>\n";
+					$output .= "<!--topCell(bigTemperature)--></div>\n";
 
 					$output .= "<div class='topCell' id='bigCompass'>\n";
 
 						$output .= rotateArrow($windBearing);
 						$output .= "<b>Wind: " . round($windSpeed) . " " . speedUnits($units) . "  (" . compass($windBearing) . ")</b><br/>\n";
 
-					$output .= "<!--compass cell--></div>\n";
+					$output .= "<!--bigCompass--></div>\n";
 
 					$output .= "<div class='topCell' id='bigConditions'>\n";
 
-						if( ($todayIcon == "cloudy") && (periodOfDay($json) != 0) ) 
+						if( ($todayIcon == "cloudy") && (periodOfDay($json, $json->currently->time) != 0) ) 
 						{
 							$todayIcon = "cloudy-night";
 						}
@@ -1152,7 +684,7 @@ $output .= "<div id='container'>\n";
 						$output .= "<img src='graphics/icons/" . $todayIcon . ".png' alt='Current Weather: " . $todayIcon . "' id='weatherIcon' height='100' width='100'/><br/>";
 						$output .= "<p><b>Today's Conditions:</b> " . $currently . ".  " . $weeklyWeather[0][0] . "<br/>\n";
 
-					$output .= "<!--metascore cell--></div>\n";	
+					$output .= "<!--bigCondition--></div>\n";	
 
 				$output .= "<!--topRow--></div>\n";	
 
@@ -1167,7 +699,7 @@ $output .= "<div id='container'>\n";
 		$output .= "<div id='below'>";
 
 		$hoursToReport = array(2, 4, 8, 12);
-		$output .= makeHourlyReport($json, $units, $hoursToReport);
+		$output .= makeHourlyReport($json, $units, $hoursToReport, $startTime, $endTime, $unitSettings, $sunTimes);
 
 		$output .= $weekAndGraph[1]; // Print out the Weekly Summary
 		$output .= "<!--below--></div>";
@@ -1183,6 +715,17 @@ $output .= "<div id='container'>\n";
 	$output .= "<!--footer--></div>\n";
 
 $output .= "<!--container--></div>\n";
+
+$output .= "//$output .= \"<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-57342744-1', 'auto');
+  ga('send', 'pageview');
+
+</script>\";";
 
 $output .= "</body>\n";
 $output .= "</html>";
