@@ -7,7 +7,9 @@ Features:
 	
 - a fully fleshed-out weather report app based upon the DarkSky weather RESTful API, covering just about any spot on the globe
 
-- due to a lack of mission-creep, advertising, and general drama, provides a better experience and UI than The Weather Network
+- Provides cyclist-specific environmental recommendations
+
+- due to a lack of mission-creep, advertising, and general fluff, provides a better experience and UI than major competitors such as The Weather Network
 
 - city selection from either a drop-down box, search option or IP trace
 
