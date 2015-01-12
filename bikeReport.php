@@ -16,6 +16,9 @@ require_once("utilities.php");
 // Import weather data collection
 require_once("getData.php");
 
+// Google analytics
+//include_once("analyticstracking.php");
+
 // Basic Variables
 $cityName = $_GET["cityName"];
 $state = $_GET["locality"];
@@ -105,7 +108,7 @@ function getPrecipInfo($precipType, $precipIntensity, $precipAccumulation, $unit
 			// Express snow to the nearest cm.  
 			if($precipAccumulation > 0)
 			{
-				$precipOutput .= "Snow:</b> " . round(inchesToCM($precipAccumulation, 0)) . "cm";
+				$precipOutput .= "Snow:</b> " . round($precipAccumulation, 0) . "cm";
 			}
 			else
 			{
@@ -136,8 +139,9 @@ function makeHourlyReport($json, $units, $hoursToReport, $startTime, $endTime, $
 	$output = "<br/>";
 
 	// Summary for the next few hours
-	$output .= "<div class='summaryTable' id='recommendTitle'>\n";
-		$output .= "<div class='summaryRow'>\n";
+	$output .= "<div class='row'>";
+	$output .= "<div class='col-xs-10 col-xs-offset-1 col-sm-10 col-sm-offset-1 col-md-10 col-md-offset-1 col-lg-10 col-lg-offset-1'>";
+
 			$output .= "<div class='summaryRecommendCell' id='recommendSummary'>\n";
 
 			$output .= makeRecommendations($json, $startTime, $endTime, $unitSettings);
@@ -151,27 +155,28 @@ function makeHourlyReport($json, $units, $hoursToReport, $startTime, $endTime, $
 				$output .= "<b>Sunset:</b> " . $sunTimes[1] . "<br/><br/>";			
 			}
 
-			$output .= "</div><!--dailySummary-->\n";
-		$output .= "</div><!--summaryRow-->\n";
-	$output .= "</div><!--summaryTable-->\n";
+			$output .= "</div><!--recomendations-->\n";
+		$output .= "</div><!--col recommendations-->\n";
+	$output .= "</div><!--row recommendations-->\n";
 
 	// Summary for the next few hours
-	$output .= "<div class='summaryTable' id='dailyTitle'>\n";
-		$output .= "<div class='summaryRow'>\n";
+	$output .= "<div class='row' id='dailyTitle'>\n";
+		$output .= "<div class='col-xs-10 col-xs-offset-1 col-sm-10 col-sm-offset-1 col-md-10 col-md-offset-1 col-lg-10 col-lg-offset-1'>\n";
 			$output .= "<div class='summaryTitleCell' id='dailySummary'>\n";
-				$output .= "<br/><h3><b>In the next few hours:  " . $json->hourly->summary . "</b></h3><br/><br/>\n";
-			$output .= "</div><!--dailySummary-->\n";
-		$output .= "</div><!--summaryRow-->\n";
-	$output .= "</div><!--summaryTable-->\n";
+				$output .= "<br/>\n
+							<h3><b>In the next few hours:  " . $json->hourly->summary . "</b></h3>\n
+							<br/>\n
+							<br/>\n";
+			$output .= "</div><!--hourly summary-->\n";
+		$output .= "</div><!--col hourly summary-->\n";
+	$output .= "</div><!--row hourly summary-->\n";
 
-	$output .= "<div class='summaryTable' id='daily'>\n";
-	$output .= "<div class='summaryRow'>\n";
-
-
+	$output .= "<div class='row four-cols' id='daily'>\n";
 
 	foreach($hoursToReport as $hour)
 	{
-		$output .= "<div class='hourCell' style='padding: 10px;'>\n";
+		$output .= "<div class='col-xs-10 col-xs-offset-1 col-sm-1 col-sm-offset-0 col-md-1 col-md-offset-0 col-lg-1 col-lg-offset-0'>\n";
+		$output .= "<div class='hourCell' >\n";
 		$output .= "<h2>" . $hour . "</h2>" . " hours from now: ";
 
 		//metascore
@@ -200,10 +205,11 @@ function makeHourlyReport($json, $units, $hoursToReport, $startTime, $endTime, $
 		}
 
 		$output .= "</div><!--day dayCell-->\n";
+		$output .= "</div><!--col hourly-->\n";
 	}
 
-	$output .= "</div><!--day summaryRow-->\n";
-	$output .= "</div><!--day summaryTable-->\n";
+
+	$output .= "</div><!--row hourly-->\n";
 	$output .= "<br/>\n";
 
 	return $output;
@@ -211,38 +217,155 @@ function makeHourlyReport($json, $units, $hoursToReport, $startTime, $endTime, $
 
 function startUntilBody($cityName, $lat, $lng)
 {
-	$startUntilBodyOutput = "<!DOCTYPE html>\n<html>
+	$startUntilBodyOutput = "<!DOCTYPE html>
+	<html lang=\"en\">
 	<head>
-		<title>The " . $cityName . " Bike Report</title>\n
-	 	<meta charset='UTF-8'>
-    	<meta name=\"Description\" content=\"Bike Report provides weather, forecast and analysis of biking conditions wherever you are.\"/>
-	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-160x160.png\" sizes=\"160x160\">
-	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-96x96.png\" sizes=\"96x96\">
-	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-16x16.png\" sizes=\"16x16\">
-	    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-32x32.png\" sizes=\"32x32\">
+	<title>The " . $cityName . " Bike Report</title>
+	<meta charset=\"utf-8\"> 
 
-		<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
-		<!-- Tiny Carousel for webcams-->
-		<script type='text/javascript' src='jquery/jquery.tinycarousel.min.js'></script>
-		<!-- Rotation script for arrow representing wind direction -->
-		<script type='text/javascript' src='http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js'></script>
-		<!-- Google line graph -->
-		<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+	<meta name=\"Description\" content=\"Bike Report provides weather, forecast and analysis of biking conditions wherever you are.\"/>
+    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-160x160.png\" sizes=\"160x160\">
+    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-96x96.png\" sizes=\"96x96\">
+    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-16x16.png\" sizes=\"16x16\">
+    <link rel=\"icon\" type=\"image/png\" href=\"/favicon-32x32.png\" sizes=\"32x32\">
+	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
 
-		<link href='http://fonts.googleapis.com/css?family=Playfair+Display%7CDroid+Serif' rel='stylesheet' type='text/css'>
+	<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
 
-		<link rel='stylesheet' href='styles/tinycarousel.css' type='text/css' media='screen'/>
+	<!-- Google line graph -->
+	<script type='text/javascript' src='https://www.google.com/jsapi'></script>
 
-		<!--Main CSS-->
-		<link rel='stylesheet' href='styles/bikeStyles.css' type='text/css' media='screen' /> 
+	<!-- Bootstrap: Latest compiled and minified CSS -->
+	<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css\">
 
-		<script>
-			$(window).load(function()
-				{
-					$('#slider1').tinycarousel({ interval: true });
-				});
-		</script>
-";
+	<!--Main BikeReport CSS-->
+	<link rel='stylesheet' href='styles/bikeStyles.css' type='text/css' media='screen' /> 
+
+	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+
+	<style type='text/css'>
+
+	@import url(http://fonts.googleapis.com/css?family=Playfair+Display%7CDroid+Serif);
+
+	h1, h2, h3, h4, h5, h6 {
+		font-family: \"Droid Serif\";	
+	}
+
+	h1 {
+		font-weight: bold;
+	}
+	#header {
+		font-family: \"Playfair Display\";
+		font-size: 125%;
+	}
+
+	#navbar {
+		width: 100%;
+		margin-left: 0px;
+		margin-right: 0px;
+	}
+
+	#content {
+		margin-left: 0px;
+		margin-right: 0px;
+	}
+
+	body {
+		font-family: \"Droid Serif\";
+		font-size: 200%;
+	}
+
+
+	h2{
+	    margin: 0;     
+	    color: #666;
+	    padding-top: 90px;
+	    font-size: 52px;
+	    font-family: \"trebuchet ms\", sans-serif;    
+	}
+
+	#checkButton2 {
+		padding: 10px;
+	}
+
+	.item{
+	    background: #5D8AA8; 
+	    text-align: center;
+	    /*height: 300px !important;*/
+	}
+
+	.carousel{
+	    margin-top: 20px;
+	}
+
+	.carousel-control 			 { width:  4%; }
+	.carousel-control.left,.carousel-control.right {margin-left:15px;background-image:none;}
+	@media (max-width: 767px) {
+		.carousel-inner .active.left { left: -100%; }
+		.carousel-inner .next        { left:  100%; }
+		.carousel-inner .prev		 { left: -100%; }
+		.active > div { display:none; }
+		.active > div:first-child { display:block; }
+
+	}
+	@media (min-width: 767px) and (max-width: 992px ) {
+		.carousel-inner .active.left { left: -50%; }
+		.carousel-inner .next        { left:  50%; }
+		.carousel-inner .prev		 { left: -50%; }
+		.active > div { display:none; }
+		.active > div:first-child { display:block; }
+		.active > div:first-child + div { display:block; }
+	}
+	@media (min-width: 992px ) {
+		.carousel-inner .active.left { left: -25%; }
+		.carousel-inner .next        { left:  25%; }
+		.carousel-inner .prev		 { left: -25%; }	
+	}
+
+@media (min-width: 768px){
+  .four-cols .col-xs-1,
+  .four-cols .col-md-1,
+  .four-cols .col-sm-1,
+  .four-cols .col-lg-1  {
+    width: 100%;
+  }
+  .seven-cols .col-md-1,
+  .seven-cols .col-sm-1,
+  .seven-cols .col-lg-1  {
+    width: 100%;
+  }
+}
+
+@media (min-width: 992px) {
+  .four-cols .col-xs-1,
+  .four-cols .col-md-1,
+  .four-cols .col-sm-1,
+  .four-cols .col-lg-1 {
+    width: 25%;
+  }
+  .seven-cols .col-md-1,
+  .seven-cols .col-sm-1,
+  .seven-cols .col-lg-1 {
+    width: 14.285714285714285714285714285714%;
+  }
+}
+  
+@media (min-width: 1200px) {
+  .four-cols .col-xs-1,
+  .four-cols .col-md-1,
+  .four-cols .col-sm-1,
+  .four-cols .col-lg-1 {
+    width: 25%;
+  }
+  .seven-cols .col-md-1,
+  .seven-cols .col-sm-1,
+  .seven-cols .col-lg-1 {
+    width: 14.285714285714285714285714285714%;
+  }
+}
+
+	</style>";
+
 	return $startUntilBodyOutput;
 }
 
@@ -259,53 +382,61 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 	$cityName = $_GET["cityName"];
 	$unitChoices = unitChoice($units);	// temp == [1], speed == [2]
 
-	// Look for webcams.  If any are in the area, then present a carousel.  Otherwise, present a psa message.
-	$camArray = makeCamArray($json, $camAPIKey);
+	// Look for webcams.  If any are in the area, then present a carousel. 
+	$camArray = makeCamArrayLarge($json, $camAPIKey);
 
 	if($camArray[0] != '')
 	{
-		$reportOutput .= "<div class='summaryTable'>\n";
-		$reportOutput .= "<div class='summaryRow'>\n";
-		$reportOutput .= "	<div class='summaryTitleCell'>
-								<div id='slider1'> ";
-								if(sizeof($camArray) < 5)
-								{
-									$reportOutput .= 		"   <a class='buttons prev' href='#''>&lt;</a>";
-								}
-		$reportOutput .=        "	<div class='viewport'  style='";
+		$reportOutput .= "<div class='row'>\n";
+		$reportOutput .= "	<div class='col-xs-10 col-xs-offset-1 col-sm-10 col-sm-offset-1 col-md-10 col-md-offset-1 col-lg-10 col-lg-offset-1'>
+								<div id=\"myCarousel\" class=\"carousel slide\" data-interval=\"5000\" data-ride=\"carousel\" data-type=\"multi\"><!-- Carousel items --> 
+     								
+     								<div class=\"carousel-inner\">";
 
-									if(sizeof($camArray) < 7)
-									{
-										$carouselWidth = (184 + 20) * sizeof($camArray); // width of a pic is 184, + 20px padding
-										$carouselWidth = "$carouselWidth";
-									}
-									else
-									{
-										$carouselWidth = 5 * (184 + 20);// "80%";
-									}
-
-									$reportOutput .= "width:" . $carouselWidth . "px;'>";
-
-									$reportOutput .= "<ul class='overview'>";
 										for($i = 0; $i < 10; $i++)
 										{
+
 											if($camArray[$i] != '')
 											{
-												$reportOutput .= "<li><img src='" . $camArray[$i] . "' alt='webcam image' /></li>";
+												//$reportOutput .= "<li><img src='" . $camArray[$i] . "' alt='webcam image' /></li>";
+												if($i == 0)
+												{
+													$reportOutput .= "
+													<div class=\"item active\">
+														<div class=\"col-md-3 col-sm-6 col-xs-12\">
+													    	<a href=\"#\">
+													    		<img src='" . $camArray[$i] . "' alt='webcam image' class=\"img-responsive\" />
+													    	</a>
+													    </div><!--col cam-->
+													</div><!--cam item " . $i . "-->";
+												}
+												else
+												{
+													$reportOutput .= "
+													<div class=\"item\">
+														<div class=\"col-md-3 col-sm-6 col-xs-12\">
+													    	<a href=\"#\">
+													    		<img src='" . $camArray[$i] . "' alt='webcam image' class=\"img-responsive\" />
+													    	</a>
+													    </div><!--col cam-->
+													</div><!--cam item " . $i . "-->";
+												}
 											}
 										}
-										$reportOutput .= "
-										</ul>
-									</div><!--viewport-->";
-								if(sizeof($camArray) < 5)
-								{
-									$reportOutput .= "<a class='buttons next' href='#'>&gt;</a>";
-								}
 
-				$reportOutput .= "</div><!--slider1-->
-							</div><!--summaryTitleCell-->";
-		$reportOutput .= "</div><!--summaryRow-->\n";
-		$reportOutput .= "</div><!--summaryTable-->\n";
+				$reportOutput .= "</div><!--carousel-inner-->
+
+        <!-- Carousel nav -->
+        <a class=\"carousel-control left\" href=\"#myCarousel\" data-slide=\"prev\">
+            <span class=\"glyphicon glyphicon-chevron-left\"></span>
+        </a>
+        <a class=\"carousel-control right\" href=\"#myCarousel\" data-slide=\"next\">
+            <span class=\"glyphicon glyphicon-chevron-right\"></span>
+        </a>
+							</div><!--myCarousel-->";
+		$reportOutput .= "</div><!--col carousel-->\n";
+		$reportOutput .= "</div><!--row carousel-->\n
+		<br/>\n";
 	}
 
 	$reportOutput .= "<div class='summaryTable'>\n";
@@ -315,11 +446,16 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 			$reportOutput .= "</div><!--summaryTitleCell-->\n";
 		$reportOutput .= "</div><!--summaryRow-->\n";
 
-		$reportOutput .= "<div class='summaryRow'>\n";
-			$reportOutput .= "<div class='summaryTitleCell' style='width: 80%; margin-left:auto; margin-right:auto;'>\n";
-				$reportOutput .= "<div id='chart_div' style='width: 100%;'></div>\n";
-			$reportOutput .= "</div><!--summaryTitleCell-->\n";
-		$reportOutput .= "</div><!--summaryRow-->\n";
+
+				$reportOutput .= "
+				<div class='row'>
+					<div class='col-xs-8 col-xs-offset-2 col-sm-8 col-sm-offset-2 col-md-10 col-md-offset-1 col-lg-10 col-lg-offset-1'>
+						<div id='chart_div'></div>\n
+					</div><!--col chart-->
+				</div><!--row chart-->
+
+				";
+
 
 	$reportOutput .= "</div><!--summaryTable-->\n";
 
@@ -356,11 +492,12 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 	// Weekly weather report output
 	$today = date('N', $unixDay); // Returns 1-7
 
-	$reportOutput .= "<div class='summaryTable'>\n";
-	$reportOutput .= "<div class='summaryRow'>\n";
+	$reportOutput .= "<div class='row seven-cols' id='weeklyReportRow'>\n";
+
 	for($i = 0; $i <= 6; $i++)
 	{
-		$reportOutput .= "<div class='dayCell'>";
+		$reportOutput .= "<div class='col-xs-10 col-xs-offset-0 col-sm-10 col-sm-offset-0 col-md-1 col-md-offset-0 col-lg-1 col-lg-offset-0'>";
+		$reportOutput .= "<div class='dayCellRes'>";
 			if($today <= 6)
 			{
 				if (function_exists('meta'))
@@ -421,10 +558,10 @@ function reportWeekly($week, $units, $weeklySummary, $json, $camAPIKey, $oneway,
 
 			$reportOutput .=  "<b>" . $week[$i][0] . "</b><br/>\n";
 		$reportOutput .= "</div><!--dayCell-->\n";
+		$reportOutput .= "</div><!--col day-->\n";
 		$today++;
 	}
-	$reportOutput .= "</div><!--summaryRow-->\n";
-	$reportOutput .= "</div><!--summaryTable-->\n";
+	$reportOutput .= "</div><!--row weekly report-->\n";
 
 	$ret = array();
 
@@ -553,58 +690,102 @@ $output = "";
 
 $output .= startUntilBody($cityName, $lat, $lng);
 
+//$output .= newReport('oneHourLink', $cityName, $lat, $lng, $locality, $country, $units, $oneway, $onewayCompass, $endTime, $tripSpeed);
+
+$output .= "<script>\n
+	function newReport(hours)
+	{
+		var url1 = \"bikeReport.php?cityName=" . $cityName . "&lat=" . $lat . "&lng=" . $lng . "&locality=" . $state . "&country=" . $country .  "&units=" . $units . "&oneway=" .  $oneway . "&compass=" . $onewayCompass . "&tripStart=" . "\";
+		var url2 = \"&tripLength=\" + hours*3600 + \"&tripSpeed=". $tripSpeed . "\";
+		var date = new Date();
+		var serverOffset = +5;
+		var time = Math.round(date.getTime()/1000) + (serverOffset*3600) + " . ($json->offset*3600) . ";\n
+		var url = url1 + time + url2;
+		//window.alert(\"url: \" + url);
+		//window.alert(\"time: \" + date.getTime()+" .$json->offset*3600 . ");
+		window.location.assign(url);\n
+	}
+
+</script>\n";
+
 $output .= "</head>\n";
 $output .= "<body>\n";
 
-// Google analytics
-$output .= "<?php include_once(\"analyticstracking.php\") ?>";
 
-$output .= "<div id='container'>\n";
-	$output .= bookmarkMe();
 
-	// Header
-	$output .= "<div id='header' style='background-image: url(https://maps.googleapis.com/maps/api/staticmap?center=" . ($lat - 0.12) . "," . $lng . "&amp;zoom=11&amp;size=600x600);'>\n";
+$output .= "<div class='container' id='container'>\n";
+
+$output .= "<div class='row'>
+			<div class='col-xs-12 col-sm-12 col-md-12 col-lg-12' id='header' style=\"background-image: url(https://maps.googleapis.com/maps/api/staticmap?center=" . ($lat - 0.12) . "," . $lng . "&amp;zoom=11&amp;size=600x600);\">";
+
+
 	$output .= "<h1>Bike Report: " . $cityName . "</h1>\n";
-	$output .= "<!--header--></div>\n";
+	$output .= "</div><!--header-->\n";
+	$output .= "</div><!--row header-->";
 
-	$output .= "<div id='navigation'>\n";
-	$output .= "<ul>\n";
-	$output .= "<li id='navDate'>" . timeStamp($json) . "</li>";
+	$output .= "	
 
-	$output .= "<li><a href='index.html' title='Try Another City'>Try Another City</a></li>";
+<div class='row'>
+	<div class=\"navbar-inverse navbar-right\" role=\"navigation\" id='navbar'>
+		<ul class=\"nav navbar-inverse navbar-nav\">
+		<li><a href=\"#\" id='newOneHourReport' onclick='newReport(1)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> New 1hr Report</a></li>
+			\n
+<li class=\"dropdown\">
+                <a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" aria-expanded=\"false\"><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> Update <span class=\"caret\"></span></a>
+                <ul class=\"dropdown-menu\" role=\"menu\">
+                    <li class=\"dropdown-header\">New Report for a trip starting now with length of:</li>
+					<li><a href=\"#\" id='oneHourLink' onclick='newReport(1)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 1 hour</a></li>\n
+                  	<li><a href=\"#\" id='twoHourLink' onclick='newReport(2)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 2 hours</a></li>\n
+                  	<li><a href=\"#\" id='fourHourLink' onclick='newReport(4)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 4 hours</a></li>\n
+             		<li><a href=\"#\" id='eightHourLink' onclick='newReport(8)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 8 hours</a></li>\n
+                   	<li><a href=\"#\" id='twelveHourLink' onclick='newReport(12)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 12 hours</a></li>\n
+                   	<li class=\"divider\"></li>
+                    <li><a href=\"#\" id='oneDayLink' onclick='newReport(24)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 1 Day</a></li>\n
+                   	<li><a href=\"#\" id='twoDayLink' onclick='newReport(48)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 2 Days</a></li>\n
+                   	<li><a href=\"#\" id='threeDayLink' onclick='newReport(72)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 3 Days</a></li>\n
+                   	<li><a href=\"#\" id='fourDayLink' onclick='newReport(96)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 4 Days</a></li>\n
+                   	<li><a href=\"#\" id='fiveDayLink' onclick='newReport(120)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 5 Days</a></li>\n
+                   	<li><a href=\"#\" id='sixDayLink' onclick='newReport(144)'><span class=\"glyphicon glyphicon-repeat\" aria-hidden=\"true\"></span> 6 Days</a></li>\n
+                </ul>
+              </li>
 
-	if($country == "Canada" || $country == "United States")
-	{
-		$output .= "<li><a target='_blank' href='" . getRadarMap($radarKey, $json->latitude, $json->longitude) . "' title='Radar'>Radar</a></li>"; // Weather radar map.
-	}
+";
 
-	$output .= "<li><a target='_blank' href='https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3' title='Click to see the Google bike map for this area'>Bike-friendly routes: " . $cityName . "</a></li>\n";
-	$output .= "<li><a id='bookmarkme' href='#' title='bookmark this page'>Bookmark</a></li>";
-	$output .= "<li><a href='mailto:webmaster@bikereport.net?Subject=BikeReport:" . $cityName . "'>Contact</a></li>\n";
-	$output .= "</ul>";
-	$output .= "<!--navigation--></div>";
+
+			if($country == "Canada" || $country == "United States")
+			{
+				$output .= "<li><a href=\"" . getRadarMap($radarKey, $json->latitude, $json->longitude). "\" target=\"_blank\"><span class=\"glyphicon glyphicon-dashboard\" aria-hidden=\"true\"></span> Radar</a></li>";
+			}
+			$output .= "<li><a href=\"https://www.google.ca/maps/@" . $json->latitude . "," . $json->longitude . ",12z/data=!5m1!1e3\" target=\"_blank\"><span class=\"glyphicon glyphicon-road\" aria-hidden=\"true\"></span> Bike-Friendly Routes: ". $cityName . "</a></li>
+			<li><a href=\"index.html\"><span class=\"glyphicon glyphicon-globe\" aria-hidden=\"true\"></span> Try Another City</a></li>
+
+				<li><a href=\"mailto:webmaster@bikereport.net?Subject=BikeReport:" . $cityName ."\"><span class=\"glyphicon glyphicon-envelope\" aria-hidden=\"true\"></span> Contact</a></li>
+		</ul>
+</div><!--navbar-->
+</div><!--row-->\n";
+
 
 	// Content
+	$output .= "<div class='row'>\n";
 	$output .= "<div id='content'>\n";
 
-	$output .= "<div id='topContent'>\n";
 
-		// Report the week's weather
-		$weekAndGraph = reportWeekly($weeklyWeather, $units, $weeklyForecast, $json, $camAPIKey, $oneway, $onewayCompass);
+	$output .= "<div class='row'>\n";
+	$output .= "<div class='row'>\n
 
-		$output .= "<div id='left'>\n";
-		$output .= $weekAndGraph[0]; // Print out the graph code		
-		$output .= "<h1>Right now:</h1>\n";
+				<div class='col-xs-5 col-xs-offset-1 col-sm-5 col-sm-offset-1 col-md-1 col-lg-1' >\n
 
-		$output .= "<!--left--></div>\n";
+					<h1>Right Now:</h1>
+					<span class=\"glyphicon glyphicon-time\" aria-hidden=\"true\"></span> <small>" . timeStamp($json) . "</small>
 
-		$output .= "<div id='right'>\n";
+				</div><!--col timestamp-->\n
 
-			$output .= "<div class='topTable'>\n";
+				<!--BIGTOP starts here-->
 
-				$output .= "<div class='topRow'>\n";
+				<div class='col-xs-5 col-sm-5 col-md-2 col-lg-2 parent'>
+					<div class='hourCell child' id='bigMeta'>
+							"; 
 
-						$output .= "<div class='topCell'  id='bigMeta'>\n";
 						if (function_exists('meta'))
 						{
 							if($oneway === "true")
@@ -621,22 +802,13 @@ $output .= "<div id='container'>\n";
 							$output .= "<h1>N/A</h1>";
 						}
 
-						$output .= "<b>Overall</b>\n";
-						$output .= "<!--topCell(bigMeta)--></div>\n";
+					$output .= "<b>Overall</b>
+					</div>
+				</div>
 
+				<div class='col-xs-5 col-xs-offset-1 col-sm-5 col-sm-offset-1 col-md-2 col-md-offset-0 col-lg-2 col-lg-offset-0'>";
 
-					if($units == "UK" or $units == "CA")
-					{
-						// Celcius thermometer--set max value. 
-						$thermoScale = 50;
-					}
-					else
-					{
-						// Fahrenheit thermometer--set max value.
-						$thermoScale = 100;
-					}
-
-					$output .= "<div class='topCell'  id='bigTemperature'>\n";
+				$output .= "<div class='hourCell'  id='bigTemperature'>\n";
 					
 					$output .= "            
 						<div id=\"thermometer\">
@@ -646,8 +818,8 @@ $output .= "<div id='container'>\n";
                         			<div class=\"amount\">" . $thermoMaxValue . "</div>
                     			</div>
                     			
-                    			<div class=\"mid\">
-                        			<div class=\"amount\">" . $thermoMidValue . "</div>
+                    			<div class=\"mid\"
+>                        			<div class=\"amount\">" . $thermoMidValue . "</div>
                     			</div>
                     			
                     			<div class=\"progress\">
@@ -658,22 +830,28 @@ $output .= "<div id='container'>\n";
                     			<div class=\"min\">
                         			<div class=\"amount\">" . $thermoMinValue . "</div>
                     			</div>
-
+                    			<span id='thermoUnits' title='" . $units;
+                    			$output .= "'></span>
                 			</div>
             			</div>";
 
-					$output .= thermometer($units);
+					//$output .= thermometer($units);
 					$output .= "<b>Temperature</b><br/><small>Apparent Temp: " . round($json->currently->apparentTemperature) . $tempSuffix  . "</small>\n";
 					$output .= "<!--topCell(bigTemperature)--></div>\n";
 
-					$output .= "<div class='topCell' id='bigCompass'>\n";
+				$output .= "</div><!--col-->
 
-						$output .= rotateArrow($windBearing);
-						$output .= "<b>Wind: " . round($windSpeed) . " " . speedUnits($units) . "  (" . compass($windBearing) . ")</b><br/>\n";
+				<div class='col-xs-5 col-sm-5 col-md-2 col-lg-2'>
+					<div class='hourCell' id='bigCompass'>
+					<img src='graphics/redArrow.png' alt='Wind Direction Arrow' id='windArrow' style=\"transform:rotate(" . ($windBearing + 180) . "deg);\"/>
+					<br/>
+					<b>Wind:<br/> " . round($windSpeed) . " " . speedUnits($units) . "  (" . compass($windBearing) . ")</b>
+					<br/>
+					</div><!--bigCompass-->
+				</div><!--column-->
 
-					$output .= "<!--bigCompass--></div>\n";
-
-					$output .= "<div class='topCell' id='bigConditions'>\n";
+				<div class='col-xs-10 col-xs-offset-1 col-sm-10 col-sm-offset-1 col-md-3 col-md-offset-0 col-lg-3 col-lg-offset-0'>";
+				$output .= "<div class='hourCell' id='bigConditions'>\n";
 
 						if( ($todayIcon == "cloudy") && (periodOfDay($json, $json->currently->time) != 0) ) 
 						{
@@ -684,39 +862,43 @@ $output .= "<div id='container'>\n";
 						$output .= "<img src='graphics/icons/" . $todayIcon . ".png' alt='Current Weather: " . $todayIcon . "' id='weatherIcon' height='100' width='100'/><br/>";
 						$output .= "<p><b>Today's Conditions:</b> " . $currently . ".  " . $weeklyWeather[0][0] . "<br/>\n";
 
-					$output .= "<!--bigCondition--></div>\n";	
+					$output .= "<!--bigCondition--></div>\n";
 
-				$output .= "<!--topRow--></div>\n";	
 
-		$output .= "<!--topTable--></div>";	
+				$output .= "</div>
 
-		$output .= "<!--right--></div>\n";	
+			<!--BIGTOP ends-->
+			<div class='col-xs-0 col-sm-0 col-md-1 col-lg-1'></div><!--buffer-->
 
-		$output .= "<div style='clear: both;'></div>\n";
-
-		$output .= "<!--topContent--></div>\n";
-
-		$output .= "<div id='below'>";
+	</div><!--row: top content-->
+";
 
 		$hoursToReport = array(2, 4, 8, 12);
 		$output .= makeHourlyReport($json, $units, $hoursToReport, $startTime, $endTime, $unitSettings, $sunTimes);
 
+		// Report the week's weather
+		$weekAndGraph = reportWeekly($weeklyWeather, $units, $weeklyForecast, $json, $camAPIKey, $oneway, $onewayCompass);
+
 		$output .= $weekAndGraph[1]; // Print out the Weekly Summary
-		$output .= "<!--below--></div>";
 
 		print $output;
 
 		$output = "";
 
-	$output .= "<!--content--></div>\n";
+	$output .= "</div><!--row-->\n";
+
+	$output .= "</div><!--content-->\n";
 
 	$output .= "<div id='footer'>\n";
 	$output .= "Copyright 2014";
-	$output .= "<!--footer--></div>\n";
+	$output .= "</div><!--footer-->\n";
 
-$output .= "<!--container--></div>\n";
+$output .= "</div><!--container-->\n";
 
-$output .= "//$output .= \"<script>
+// extra
+$output .= "</div>\n";
+
+$output .= "<script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -725,7 +907,155 @@ $output .= "//$output .= \"<script>
   ga('create', 'UA-57342744-1', 'auto');
   ga('send', 'pageview');
 
-</script>\";";
+</script>";
+
+$output .= "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js\"></script>
+<script>
+    $('.carousel').carousel({
+        interval: 7000
+    })
+</script>
+<script>
+$('.carousel[data-type=\"multi\"] .item').each(function(){
+  var next = $(this).next();
+  if (!next.length) {
+    next = $(this).siblings(':first');
+  }
+  next.children(':first-child').clone().appendTo($(this));
+  
+  for (var i=0;i<2;i++) {
+    next=next.next();
+    if (!next.length) {
+    	next = $(this).siblings(':first');
+  	}
+    
+    next.children(':first-child').clone().appendTo($(this));
+  }
+});
+</script>
+       <script>
+        //Based originally on a positive-only \"fundraising\" type thermometer by \"Geeky John\" http://jsfiddle.net/GeekyJohn/vQ4Xn/
+        function percentage(goalAmount, minAmount, progressAmount) {
+            var range, compensated, percentageAmount;
+
+            range = (goalAmount + 274) - (minAmount + 274);
+            compensated = (progressAmount + 274) - (minAmount + 274);
+            percentageAmount = (progressAmount + 274) - (minAmount + 274) / range;
+
+            percentageAmount = compensated / range;
+            percentageAmount = percentageAmount * 100;
+
+            return percentageAmount;
+        }
+        /**
+         * Thermometer Progress meter.
+         * This function will update the progress element in the \"thermometer\"
+         * to the updated percentage.
+         * If no parameters are passed in it will read them from the DOM
+         *
+         * @param {Number} goalAmount The Goal amount, this represents the 100% mark
+         * @param {Number} progressAmount The progress amount is the current amount
+         * @param {Boolean} animate Whether to animate the height or not
+         *
+         */
+        function thermometer(unitChoice, goalAmount, progressAmount, minAmount, animate) {
+            \"use strict\";
+
+            var \$thermo = \$(\"#thermometer\"),
+                \$progress = \$(\".progress\", \$thermo),
+                \$goal = \$(\".max\", \$thermo),
+                \$min = \$(\".min\", \$thermo),
+                \$mid = \$(\".mid\", \$thermo),
+                percentageAmount, midHeight,
+                compensated, midAmount, range, rangePercent;
+
+            // Metric units by default
+            //var unitChoice = unitChoice || 'C';
+
+
+            // Get units  
+            var unitData = $('#thermoUnits').attr('title');
+            if(unitData === 'CA')
+            {
+            	unitChoice = 'C';
+            }
+            else if(unitData === 'US')
+            {
+            	unitChoice = 'F';
+            }
+            else
+            {
+            	unitChoice = 'C'
+            }
+
+
+            // Adjustment value for the midline marker line (typically the zero on a thermometer)
+            // Change this to move your 'zero' value up or down the thermometer to compensate for size changes
+            var minAdjust = -25;
+
+            // Animate by default
+            var animate = typeof Boolean !== 'undefined' ? animate : true;
+
+            goalAmount = goalAmount || parseFloat(\$goal.text());
+            minAmount = minAmount || parseFloat(\$min.text());
+            midAmount = midAmount || parseFloat(\$mid.text());
+            progressAmount = progressAmount || parseFloat(\$progress.text());
+            percentageAmount = Math.min(Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
+
+            //let's format the numbers and put them back in the DOM
+            \$goal.find(\".amount\").text(goalAmount + unitChoice);
+            \$progress.find(\".amount\").text(progressAmount + unitChoice);
+            \$mid.find(\".amount\").text(midAmount + unitChoice);
+            \$min.find(\".amount\").text(minAmount + unitChoice);
+
+            percentageAmount = percentage(goalAmount, minAmount, progressAmount);
+
+            //0 at C: 42.8571;
+
+            midHeight = percentage(goalAmount, minAmount, 0);
+
+            if (unitChoice == \"C\")
+            {
+            	\$(\"#thermometer .mid\").css(\"height\", ((42.8571) + \"%\"));
+            }
+            else if (unitChoice == \"F\")
+            {
+            	\$(\"#thermometer .mid\").css(\"height\", ((14.28571) + \"%\"));
+            }
+
+            \$(\"#thermometer .min\").css(\"bottom\", (-37 + \"%\")); 
+
+            //let's set the progress indicator
+            \$progress.find(\".amount\").hide();
+            
+            if (animate !== false) {
+                \$progress.animate({
+                    \"height\": percentageAmount + \"%\"
+                }, 1200, function () {
+                    \$(this).find(\".amount\").fadeIn(500);
+                });
+            } else {
+                \$progress.css({
+                    \"height\": percentageAmount + \"%\"
+                });
+                \$progress.find(\".amount\").fadeIn(500);
+            }
+        }
+
+        \$(document).ready(function () 
+        {
+            // Call thermometer() without arguments to have it read from the DOM
+            thermometer();
+            // ...or with parameters if you want to update it using JavaScript.
+            // You can update live, and choose whether to show the animation
+            // (you might not if the updates are relatively small).
+            //thermometer(50, -21, -30, true);
+        });
+    </script>";
+
+$output .= $weekAndGraph[0]; // Print out the graph code
 
 $output .= "</body>\n";
 $output .= "</html>";

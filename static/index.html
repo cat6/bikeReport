@@ -12,16 +12,11 @@
     <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
     <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
 
-    <!-- Bootstrap: Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <!--Main CSS-->
     <link rel='stylesheet' href='styles/bikeStyles.css' type='text/css' media='screen' /> 
 
     <style type='text/css'>    
-        h1, h4, h6
+        h4, h6
         {
             display: inline;
         }
@@ -82,54 +77,31 @@
             text-decoration: none;
         }
 
-        @import url(http://fonts.googleapis.com/css?family=Playfair+Display%7CDroid+Serif);
-
-        h1, h2, h3, h4, h5, h6 {
-            font-family: "Droid Serif"; 
-        }
-
-        h1, h4 {
-            font-weight: bold;
-        }
-
-        #header {
-            font-family: "Playfair Display";
-            font-size: 125%;
-        }
-
-        #navbar {
-            width: 100%;
-            margin-left: 0px;
-            margin-right: 0px;
-        }
-
-        #content {
-            margin-left: 0px;
-            margin-right: 0px;
-        }
-
-        body {
-            font-family: "Droid Serif";
-            font-size: 200%;
-        }
-
-        #pickACity, #search, #explore {
-            font-family: "Droid Serif";
-        }
-
     </style>
 
+
+
+
     <script>
-        "use strict";
 
         function stripChars(str)
         {
-            return str.replace(/&/g, "").replace(/</g, "").replace(/>/g, "").replace(/"/g, "").replace(/'/g, "");   
+            return str 
+            .replace(/&/g, "")
+            .replace(/</g, "")
+            .replace(/>/g, "")
+            .replace(/"/g, "")
+            .replace(/'/g, "");   
         }
 
         function escapeHtml(unsafe) 
         {
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
         }
 
         function tellIP(ip) {
@@ -167,8 +139,7 @@
 
         function pickDropDown(frm, placeArr, type, units)
         {
-            var oneway, compass, dropDownValue, lat, lng, cityName, locality, country;
-
+            var oneway, compass;
             oneway = document.getElementById("oneway").checked;
             compass = frm.compass.value;
 
@@ -217,7 +188,7 @@
             compass = document.getElementsByName('compass')[0].value;
             units = document.getElementsByName('units2')[0].value;
 
-            ipOutput = "<br/><h4>Based upon your IP address (" + ip + "), you appear to be in " + ipCityName + ", " + ipCountry + ".</h4>";
+            ipOutput = "<h6>Based upon your IP address (" + ip + "), you appear to be in " + ipCityName + ", " + ipCountry + ".</h6>";
 
             ipArray = [ipCityName, ipLocality, ipCountry, ipLat, ipLng, oneway, compass];
 
@@ -229,7 +200,7 @@
         }
 
         function getCityData(frm) {
-            var majorCities, units, output, cityXML, cityURL, cityURL1, cityURL2, cityName, candidates, lat, lng, locality, country, i, oneway, compass, cityInput;
+            var majorCities, units, output, cityXML, cityURL, cityURL1, cityURL2, cityName, candidates, lat, lng, locality, country, i, oneway, compass;
 
             // If frm is an array, then it contains the specifics of a place from IP tracing.  Just go straight to the report page.
             if(frm instanceof Array)
@@ -243,9 +214,8 @@
             }
 
             // Default cities data: lat, lng, cityName, locality, country
-            var majorCities = [
+            majorCities = [
                 [43.653226, -79.3831843, "Toronto", "Ontario", "Canada"],
-                [49.2500, -123.1000, "Vancouver", "British Columbia", "Canada"],
                 [40.7127837, -74.0059413, "New York", "New York", "United States"],
                 [45.5234515, -122.6762071, "Portland", "Oregon", "United States"],
 
@@ -255,11 +225,7 @@
                 [52.518623,  13.376198, "Berlin", "", "Germany"],
                 [52.3667,  4.9000, "Amsterdam", "", "The Netherlands"],
 
-                [-33.865143, 151.209900, "Sydney", "", "Australia"],
-                [-31.9522, 115.8589, "Perth", "", "Australia"],
-                [-37.8136, 144.9631, "Melbourne", "", "Australia"],
-                [-34.9290, 138.6010, "Adelaide", "", "Australia"],
-                [-27.4679, 153.0278, "Brisbane", "", "Australia"],
+                [-33.865143,  151.209900, "Sydney", "", "Australia"],
 
                 [30.0500,  31.2333, "Cairo", "", "Egypt"],
 
@@ -268,7 +234,7 @@
                 [22.2670, 114.1880, "Hong Kong", "Hong Kong Island", "China"]
             ];
 
-            var explorePlaces = [
+            explorePlaces = [
                 [-77.8500, 166.6667, "McMurdo Station", "", "Antarctica"],
                 [40.8033, -76.3417, "Centralia", "Pennsylvania", "United States"],
                 [51.4056, 30.0569, "Prypiat", "", "Ukraine"],
@@ -310,8 +276,8 @@
             // Do a search
             if(frm.cityDropDown.value == "default" && frm.interestingDropDown.value == "default")
             {
-                var specialCases = ["istanbul", "brasilia", "san paulo"];  // Place-names without special chars, but where special chars need to be input as part of the name or nothing will result
-                var specialReplacements = ["İstanbul", "Brasília", "São Paulo"]; // As per specialCases, but these are the replacement strings.
+                specialCases = ["istanbul", "brasilia", "san paulo"];  // Place-names without special chars, but where special chars need to be input as part of the name or nothing will result
+                specialReplacements = ["İstanbul", "Brasília", "São Paulo"]; // As per specialCases, but these are the replacement strings.
 
                 if(specialCases.indexOf(cityInput.toLowerCase()) != -1)
                 {
@@ -355,13 +321,13 @@
         function parseCity(response, cityName, units) {
             // Parse response data and glean location data.  Accept only results that are valid cities and not place-names similar to cityName
             var jsonArr, i, j, output, lat, lng, cityFlag, cityCount, possibleCities, candidate;
-            var jsonArr = JSON.parse(response);
-            var output = "";
-            var lat = "";
-            var lng = "";
-            var cityFlag = 0;
-            var cityCount = 0;
-            var toykoCases = ["Tokyo"]; // Places where there isn't a state/province in the google api search result
+            jsonArr = JSON.parse(response);
+            output = "";
+            lat = "";
+            lng = "";
+            cityFlag = 0;
+            cityCount = 0;
+            toykoCases = ["Tokyo"]; // Places where there isn't a state/province in the google api search result
 
             /* 
                 Array for storing candiate cities for the user to select from:
@@ -371,7 +337,7 @@
                 [3]: city locality  (e.g. Ontario)
                 [4]: Country        (e.g. Canada)
             */ 
-            var possibleCities = [];
+            possibleCities = [];
 
             for(i = 0; i < jsonArr.results.length; i++)
             {
@@ -387,7 +353,7 @@
                     if(jsonArr.results[i].address_components[j].types.indexOf("locality") != -1 || jsonArr.results[i].address_components[j].types.indexOf("administrative_area_level_1") != -1)
                     {
                         // Not all localities are proper cities.  Some are "routes", etc..  Filter these out.
-                        if(jsonArr.results[i].address_components[j].long_name.toLowerCase() === cityName.toLowerCase() && cityFlag === 0)
+                        if(jsonArr.results[i].address_components[j].long_name.toLowerCase() == cityName.toLowerCase() && cityFlag == 0)
                         {
                             candidate[2] = jsonArr.results[i].address_components[j].long_name;
                             output += "<td>";
@@ -395,7 +361,7 @@
                             cityFlag = 1;
                         }
                         // if formatted_address.toLower() includes the name.toLower(), then its likely a good guess
-                        if (jsonArr.results[i].formatted_address.toLowerCase().indexOf(cityName.toLowerCase()) >= 0 && cityFlag === 0)
+                        if (jsonArr.results[i].formatted_address.toLowerCase().indexOf(cityName.toLowerCase()) >= 0 && cityFlag == 0)
                         {
                             candidate[2] = jsonArr.results[i].address_components[j].long_name;
                             output += "<td>";
@@ -448,7 +414,7 @@
 
         function report(output) {
             // Actually write the output string to the document
-            document.getElementById("reportDiv").innerHTML = output;    
+            document.getElementById("report").innerHTML = output;    
         }
 
         function tripData()
@@ -456,7 +422,7 @@
             var currentTime = Math.floor((new Date).getTime()/1000);
             var tripSpeed = 20;
             var tripStartHours = document.getElementById("recStart").value;
-            var nowFlag = 0;
+            nowFlag = 0;
 
             if(tripStartHours == "NOW")
             {
@@ -464,14 +430,14 @@
                 nowFlag = 1;
             }
             var tripStartDays = document.getElementById("recStartDays").value;
-            var tripStart = currentTime + parseInt(tripStartHours, 10) + parseInt(tripStartDays, 10);
+            var tripStart = currentTime + parseInt(tripStartHours) + parseInt(tripStartDays);
 
             var tripLengthHours = document.getElementById("recLengthHours").value;
             var tripLengthDays = document.getElementById("recLengthDays").value;           
-            var tripLength = parseInt(tripLengthHours, 10) + parseInt(tripLengthDays, 10);
+            var tripLength = parseInt(tripLengthHours) + parseInt(tripLengthDays);
 
             // Validation of startTime and tripLength
-            if((parseInt(tripStart, 10) + parseInt(tripLength, 10)) - currentTime > 518400)
+            if((parseInt(tripStart) + parseInt(tripLength)) - currentTime > 518400)
             {
                 window.alert("Weather forecasts are only available for the next week.  We will give you a forecast covering the last available 24 hours in this period.");
                 if(tripStart + tripLength > 51800)
@@ -483,7 +449,7 @@
             }
 
             // VALIDATE THAT START TIME IS NOT BOTH 'NOW' AND > 0 DAYS.  
-            if(nowFlag == 1 && parseInt(tripStartDays, 10) > 0)
+            if(nowFlag == 1 && parseInt(tripStartDays) > 0)
             {
                 window.alert("You have entered a both 'NOW' and a value for 'days' for a start time.  We will presume this was a mistake and calculate a trip of that many days");
                 tripLength = tripStartDays;
@@ -507,9 +473,9 @@
         {
             // Returns string with a link
             var linkOutput = "";
-            var oneway = document.getElementById("oneway").checked;
-            var compass = document.getElementsByName('compass')[0].value;
-            var units = document.getElementsByName('units2')[0].value;
+            oneway = document.getElementById("oneway").checked;
+            compass = document.getElementsByName('compass')[0].value;
+            units = document.getElementsByName('units2')[0].value;
             //url = escapeHtml(url); 
             linkOutput += "bikeReport.php?cityName=" + escapeHtml(cityName);
             linkOutput += "&lat=" + lat;
@@ -528,20 +494,15 @@
             return -1;
         }
 
-        function jump(h) {
-            var url = location.href;               
-            location.href = "#"+h;                 
-            history.replaceState(null,null,url); 
-            // http://stackoverflow.com/questions/13735912/anchor-jumping-by-using-javascript
-        }
-
         function didYouMean(didYouMeanCities, units) {
             // Returns a single user-choosen city's data, given an array of cities.
-            var validCityFlag, didYouMeanOutput, i, linkButtonID;//, units;
+            var validCityFlag, didYouMeanOutput, i, units;
 
+            // ADJUST
+            //units = "CA";
             // didYouMeanCities: 0 - lat, 1 - lng, 2 - city, 3 - province/state, 4 - country
-            var validCityFlag = 0;
-            var didYouMeanOutput = "<br/><div id='report'>";
+            validCityFlag = 0;
+            didYouMeanOutput = "<br/><div class='summaryCell'>";
             didYouMeanOutput += "<p><i>Did you mean...?</i></p>";
             didYouMeanOutput += "<p>";
             for(i = 0; i < didYouMeanCities.length; i++)
@@ -567,12 +528,10 @@
             if(validCityFlag == 1)
             {
                 report(didYouMeanOutput);
-                jump("reportDiv");
             }
             else
             {
-                report("<div id='report'>Sorry, no results found for that name</div>");
-                jump("reportDiv");
+                report("<div class='summaryCell'>Sorry, no results found for that name</div>");
             }
         }
     </script>
@@ -581,363 +540,295 @@
 
 <body>
 
-<div class='container' id='container'>
-
-    <div class='row'>
-        <div id='header'>
-            <h1>Bike Report:</h1><h2> is it a good day to ride my bike?</h2>
-        </div>
+<div id='container'>
+    <div id='header'>
+        <h1>Bike Report: is it a good day to ride my bike?</h1>
     </div>
+    <div id='navigation'></div>
 
-    <div class='row'>
-        <div id='content'>
-            <div class='row' style='text-align: center;'>
-                <div class='col-lg-12'>
+    <div id='content'>
+        <div class='summaryTable'>
+            <div class='summaryRow' style='text-align: center;'>
                     <br/>
                     <h4>Bike Report provides weather, forecast, and analysis of biking conditions wherever you are.</h4>
-                    <br/>
-                    <br/>
-                    <h4>Just choose or search for your location to get started.</h4>
-                    <br/>
-                    <div id="userIP"></div>
-                </div><!--col-12-->
-            </div><!--row explanation/IP-trace-->
+            </div><!--summaryRow-->
+            <div class='summaryRow' style='text-align: center;'>
+                                <br/><div id="userIP"></div>
+            </div>
+        </div><!--summaryTable-->
+        <br/>
 
-            <br/>
+        <div id='newFormBox'>
+            <form>
+                <div class='summaryTable'>
+                    <div class='summaryRow'>
 
-            <div class='row'>
+                            <div id='inputLeft' class='inputCell'>
+                                <select name="units2" id="units2">
+                                    <option value="CA">Metric   (km/C)</option>
+                                    <option value="US">Imperial (mi/F)</option>
+                                    <option value="UK">Mixed    (mi/C)</option>
+                                </select>  <h4>Units</h4>
+                            <br/><br/>
+                            <div id='recommendStartHours' class='inputCellBottom'></div>
+                            <div id='recommendStartDays' class='inputCellBottom'></div>                           
 
-                <div class='col-xs-5 col-xs-offset-1 col-sm-5 col-sm-offset-1 col-md-2 col-md-offset-3 col-lg-2 col-lg-offset-3 indexBox'>
-                    <form>
-                    <div id='recommendStartHours'></div>
-                    <div id='recommendStartDays'></div>
-                    <br/>                           
-                </div><!--start time-->
+                            <!--inputCell--></div>
+                            <div id='inputRight' class='inputCell' style="padding-left: 20px;">
+                                <input type="checkbox" id="oneway" name="oneway" value="oneway" style="padding-left: 20px;"><h4>One-way trip</h4>
+                                <select name="compass" id="compass">
+                                    <option value="0">N</option>
+                                    <option value="45">NE</option>
+                                    <option value="90">E</option>
+                                    <option value="135">SE</option>
+                                    <option value="180">S</option>
+                                    <option value="225">SW</option>
+                                    <option value="270">W</option>
+                                    <option value="315">NW</option>
+                                </select>
+                                <br/><br/>
+                            <div id='recommendHours' class='inputCellBottom'></div>
+                            <div id='recommendDays' class='inputCellBottom'></div>
 
-                <div class='col-xs-5 col-xs-offset-0 col-sm-5 col-sm-offset-0 col-md-2 col-md-offset-2 col-lg-2 col-lg-offset-2 indexBox'>
-                    <div id='recommendHours'></div>
-                    <div id='recommendDays'></div>
-                    <br/>
-                </div><!--length time-->
-
-            </div><!--time row-->
-
-            <br/>
-
-            <div class='row'>
-
-                <div class='col-xs-6 col-xs-offset-1 col-sm-5 col-sm-offset-1 col-md-3 col-md-offset-2 col-lg-2 col-lg-offset-3 indexBox'>
-                    <h4>Units</h4>
-                    <br/>
-                    <select name="units2" id="units2">
-                        <option value="CA">Metric   (km/C)</option>
-                        <option value="US">Imperial (mi/F)</option>
-                        <option value="UK">Mixed    (mi/C)</option>
-                    </select>  
-                    </br><br/>
-                </div><!--col units-->
-
-                <div class='col-xs-4 col-xs-offset-0 col-sm-5 col-sm-offset-0 col-md-2 col-md-offset-2 col-lg-2 col-lg-offset-2 indexBox'>
-                    <input type="checkbox" id="oneway" name="oneway" value="oneway" style="padding-left: 20px;">
-                    <h4>One-way trip</h4>
-                    <br/>
-                    <select name="compass" id="compass">
-                        <option value="0">N</option>
-                        <option value="45">NE</option>
-                        <option value="90">E</option>
-                        <option value="135">SE</option>
-                        <option value="180">S</option>
-                        <option value="225">SW</option>
-                        <option value="270">W</option>
-                        <option value="315">NW</option>
-                    </select>
-                    <br/><br/>
-                </div><!--col check/compass-->
-
-            </div><!--row units/oneway-->
-
-            <br/>
-            <br/>
-
-            <div class='row'>
-
-                <div class='col-xs-6 col-xs-offset-3 col-sm-6 col-sm-offset-3 col-md-4 col-md-offset-4 col-lg-4 col-lg-offset-4 indexBox'>
-                    <h2>
-                        <label for='cityDropDown' id='pickACity'>Pick a City</label>
-                    </h2>
-                    
-                    <br/>
-
-                    <select name="cityDropDown" id="cityDropDown" onchange = "interestingDropDown.value = 'default'">
-                        <option value="default">Choose...</option>
-                        <optgroup label="N America">
-                        <option value="toronto">Toronto</option>
-                        <option value="vancouver">Vancouver</option>
-                        <option value="new york">New York</option>
-                        <option value="portland">Portland</option>
-
-                        <optgroup label="Europe">
-                        <option value="london">London</option>
-                        <option value="paris">Paris</option>
-                        <option value="moscow">Moscow</option>
-                        <option value="Berlin">Berlin</option>
-                        <option value="amsterdam">Amsterdam</option>
-
-                        <optgroup label="Australia">
-                        <option value="sydney">Sydney</option>
-                        <option value="melbourne">Melbourne</option>
-                        <option value="brisbane">Brisbane</option>
-                        <option value="perth">Perth</option>
-                        <option value="Adelaide">Adelaide</option>
-
-                        <optgroup label="Africa">
-                        <option value="cairo">Cairo</option>
-
-                        <optgroup label="Asia">
-                        <option value="Tokyo">Tokyo</option>
-                        <option value="hong kong">Hong Kong</option>
-                        <option value="shanghai">Shanghai</option>
-                    </select>
-                </div><!--col cityDropDown-->
-
-            </div><!--row-->
-            <div class='row'>
-
-                <div class='text-center col-xs-0 col-sm-0 col-md-0 col-lg-0 ' style='line-height:100px;'>
-                    <h4>OR</h4>
-                </div><!--OR1-->
-
-            </div><!--row-->
-            <div class='row'>
-
-                <div class='col-xs-6 col-xs-offset-3 col-sm-6 col-sm-offset-3 col-md-4 col-md-offset-4 col-lg-4 col-lg-offset-4 indexBox'>
-                    <h2><label for='cityInput2' id='search'>Search</label></h2>
-                    <br/>
-                    <input type="text" size="10" name="cityInput" id="cityInput2" placeholder="">
-                    <br/>
-                </div><!--col search-->
+                            <!--inputCell--></div>
 
 
-            </div><!--row-->
-            <div class='row'>
+                    </div><!--units, IP output-->
+                </div><!--summaryTable-->
+                <br/>
+                <div class='summaryTable'>
+                    <div class='summaryRow'>
+                        <div class='summaryCell'>
+                            <h2><label for='cityDropDown'>Pick a City</label></h2>
+                            
+                            <select name="cityDropDown" id="cityDropDown" onchange = "interestingDropDown.value = 'default'">
+                                <option value="default">Choose...</option>
+                                <optgroup label="N America">
+                                <option value="toronto">Toronto</option>
+                                <option value="new york">New York</option>
+                                <option value="portland">Portland</option>
 
-                <div class='col-xs-0 col-sm-0 col-md-0 col-lg-0 text-center' style='line-height:100px;'>
-                    <h4>OR</h4>
-                </div><!--OR2-->
+                                <optgroup label="Europe">
+                                <option value="london">London</option>
+                                <option value="paris">Paris</option>
+                                <option value="moscow">Moscow</option>
+                                <option value="Berlin">Berlin</option>
+                                <option value="amsterdam">Amsterdam</option>
 
-            </div><!--row-->
-            <div class='row'>
+                                <optgroup label="Australia">
+                                <option value="sydney">Sydney</option>
 
-                <div class='col-xs-10 col-xs-offset-1 col-sm-6 col-sm-offset-3 col-md-4 col-md-offset-4 col-lg-4 col-lg-offset-4 indexBox'>
-                    <h2><label for='interestingDropDown' id='explore'>Explore</label></h2>
-                    <br/>
-                    <select name="interestingDropDown" id="interestingDropDown" onchange = "cityDropDown.value = 'default'">
-                        <option value="default">Choose...</option>
-                        <optgroup label="Science">
-                        <option value="mcmurdo station">McMurdo, Antarctica</option>
-                        <option value="cape canaveral">Cape Canaveral</option>
+                                <optgroup label="Africa">
+                                <option value="cairo">Cairo</option>
 
-                        <optgroup label="Disaster">
-                        <option value="centralia">Centralia, PA</option>
-                        <option value="prypiat">Prypiat, Ukraine</option>
+                                <optgroup label="Asia">
+                                <option value="Tokyo">Tokyo</option>
+                                <option value="hong kong">Hong Kong</option>
+                                <option value="shanghai">Shanghai</option>
+                            </select>
+                        </div><!--Pick a City-->
 
-                       <optgroup label="Nature">
-                       <option value="grand canyon">Grand Canyon</option>
-                       <option value="mount rushmore">Mount Rushmore</option>
-                       <option value="mount everest">Mount Everest</option>
+                        <div class='spacer'>
+                            <h4>OR</h4>
+                        </div><!--OR1-->
 
-                       <optgroup label="Scenic">
-                       <option value="honolulu">Honolulu</option>
-                    </select>
-                </div><!--col interesting-->
+                        <div class='summaryCell'>
+                                <h2><label for='cityInput2'>Search<br/></label></h2>
+                                <input type="text" size="10" name="cityInput" id="cityInput2" placeholder="search..."><br/>
+                        </div><!--Search-->
 
-            </div><!--row city/search/explore-->
+                        <div class='spacer'>
+                            <h4>OR</h4>
+                        </div><!--OR2-->
 
-            <br/>
+                        <div class='summaryCell'>
+                            <h2><label for='interestingDropDown'>Explore</label></h2>
+                            <select name="interestingDropDown" id="interestingDropDown" onchange = "cityDropDown.value = 'default'">
+                                <option value="default">Choose...</option>
+                                <optgroup label="Science">
+                                <option value="mcmurdo station">McMurdo, Antarctica</option>
+                                <option value="cape canaveral">Cape Canaveral</option>
 
-            <div class='row'>
+                                <optgroup label="Disaster">
+                                <option value="centralia">Centralia, PA</option>
+                                <option value="prypiat">Prypiat, Ukraine</option>
 
-                <div class='col-xs-6 col-xs-offset-3 col-sm-4 col-sm-offset-4 col-md-2 col-md-offset-5 col-lg-2 col-lg-offset-5 text-center'>
-                    <button type="button" id="checkButton2" onclick="getCityData(this.form)">Is it a good day?</button>
-                </div><!--col button-->
+                               <optgroup label="Nature">
+                               <option value="grand canyon">Grand Canyon</option>
+                               <option value="mount rushmore">Mount Rushmore</option>
+                               <option value="mount everest">Mount Everest</option>
 
-            </div><!--row button-->
+                               <optgroup label="Scenic">
+                               <option value="honolulu">Honolulu</option>
+                            </select>
+                        </div><!--Interesting Places-->
+                    </div><!--Three boxes-->
+                </div><!--summaryTable-->
 
-            <br/>
-            <br/>
+                <div class='summaryTable'>
+                    <div class='summaryRow'>
+                        <div class='summaryTitleCell' style='text-align: center;'>
+                            <br/>
+                            <button type="button" class="getReportButton" id="checkButton2" onclick="getCityData(this.form)">Is it any good?</button>
+                            <br/><br/>
+                        </div><!--Get Report-->
+                    </div><!--Bottom Row-->
+                </div><!--summaryTable-->
+                <div class='summaryTable'>
+                    <div class='summaryRow'>
+                        <div id="report" style='width: 500px; margin: 0 auto;'></div>
+                    </div><!--row--><br/><br/>
+                    <div class='summaryRow'>
 
-            <div class='row'>
-                <div class='col-xs-2 col-sm-3 col-md-4 col-lg-4'></div>
-
-                <div class='col-xs-10 col-sm-6 col-md-4 col-lg-4 text-center' id='reportDiv'></div>
-                
-                <div class='col-xs-2 col-sm-3 col-md-4 col-lg-4'></div>
-            </div><!--row-->
-
+                    </div>
+            </div>
             </form>
 
-            <div class='row'>
-                <div class='col-xs-12 col-sm-12 col-md-12 col-lg-12 navbar-inverse navbar-default navbar-right'>
-                <footer>
-                    <span style='color: #FAEBD7;'>Copyright 2014</span>
-                </footer>
-                </div>
-            </div><!--row footer-->
+        </div><!--newFormBox-->
 
-            </div><!--Content-->
-        </div><!--row(content)-->
-    </div><!--container-->
 
-    <script>
 
-        function _formatAMPM(date) {
-            // returns a 12 hour AM/PM time, given date, an integer from 1-24
-            if((date - 12) > 0)
-            {
-                return (date - 12).toString() + "PM";
-            }
-            else
-            {
-                return date + "AM";
-            }
-            return -1;
-        }
+        <!--Content--></div>
 
-        var date = new Date();
-        //var currentTime = date.getTime();
-        var currentTime = Math.floor((new Date).getTime()/1000);
+    <div id='footer'>Copyright 2014</div>
 
-        var currentHour = date.getHours(); // + (getTimeZoneOffset() * 3600);
-        var remainingHours = (24 - currentHour);
-        var currentDay = date.getDay();
+    <!--container--></div>
 
-        var weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        var ret = [];
-        var retTemp = [];
+<script>
 
-        for(var i = 0; i <= remainingHours; i++)
+    function _formatAMPM(date) {
+        // returns a 12 hour AM/PM time, given date, an integer from 1-24
+        if((date - 12) > 0)
         {
-            retTemp.push(currentTime + (i * 3600));
-            retTemp.push(_formatAMPM(currentHour + i));
-            ret.push(retTemp);
-            retTemp = [];
+            return (date - 12).toString() + "PM";
         }
+        else
+        {
+            return date + "AM";
+        }
+        return -1;
+    }
 
+    var date = new Date();
+    //var currentTime = date.getTime();
+    var currentTime = Math.floor((new Date).getTime()/1000);
+
+    var currentHour = date.getHours(); // + (getTimeZoneOffset() * 3600);
+    var remainingHours = (24 - currentHour);
+    var currentDay = date.getDay();
+
+    var weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    var ret = [];
+    var retTemp = [];
+
+    for(var i = 0; i <= remainingHours; i++)
+    {
+        retTemp.push(currentTime + (i * 3600));
+        retTemp.push(_formatAMPM(currentHour + i));
+        ret.push(retTemp);
         retTemp = [];
+    }
 
-        for(i = 0; i <= currentDay; i++)
+    retTemp = [];
+
+    for(i = 0; i <= currentDay; i++)
+    {
+        dayToMove = weekdays.shift();
+        if(weekdays[currentDay] == weekdays[i])
         {
-            dayToMove = weekdays.shift();
-            if(weekdays[currentDay] == weekdays[i])
-            {
-                break;
-            }
-            weekdays.push(dayToMove);
+            break;
         }
-        for(i = 0; i < weekdays.length; i++)
+        weekdays.push(dayToMove);
+    }
+    for(i = 0; i < weekdays.length; i++)
+    {
+        retTemp.push(currentTime + (i * 86400));
+        retTemp.push(weekdays[i]);
+        ret.push(retTemp);
+        retTemp = [];
+    }
+
+    var recommendStartHours = " <b>Starting</b><br/><select id='recStart'>\n";
+    var recommendStartDays = "<select id='recStartDays'>\n";
+    var recommendLengthHours = "<b>Length</b><br/><select id='recLengthHours'>\n";
+    var recommendLengthDays = "<select id='recLengthDays'>\n";
+    recommendDays += "<option value='0'>0</option>\n";
+    for(i = 0; i < 25; i++) // Populate start-times with hours
+    {
+        if(i == 0)
         {
-            retTemp.push(currentTime + (i * 86400));
-            retTemp.push(weekdays[i]);
-            ret.push(retTemp);
-            retTemp = [];
-        }
+            recommendStartHours += "<option value='" + "NOW" + "'"; 
+            recommendStartHours += "selected='selected'";
+            recommendStartHours += ">Now</option>\n";
+            recommendStartHours += "<option value='" + 0 + "'"; 
+            recommendStartHours += ">0 hours</option>\n";
 
-        var recommendStartHours = " <b>Starting</b><br/><select id='recStart'>\n";
-        var recommendStartDays = "<select id='recStartDays'>\n";
-        var recommendLengthHours = "<b>Length</b><br/><select id='recLengthHours'>\n";
-        var recommendLengthDays = "<select id='recLengthDays'>\n";
-        recommendDays += "<option value='0'>0</option>\n";
-        for(i = 0; i < 25; i++) // Populate start-times with hours
+            recommendLengthHours += "<option value='" + 0 + "'"; 
+            recommendLengthHours += ">0 hours</option>\n";
+        }
+        else if(i == 1)
         {
-            if(i === 0)
-            {
-                recommendStartHours += "<option value='" + "NOW" + "'"; 
-                recommendStartHours += "selected='selected'";
-                recommendStartHours += ">Now</option>\n";
-                recommendStartHours += "<option value='" + 0 + "'"; 
-                recommendStartHours += ">0 hours</option>\n";
+            recommendStartHours += "<option value='" + (i*3600) + "'"; 
+            recommendStartHours += ">1 hour</option>\n";
 
-                recommendLengthHours += "<option value='" + 0 + "'"; 
-                recommendLengthHours += ">0 hours</option>\n";
-            }
-            else if(i == 1)
-            {
-                recommendStartHours += "<option value='" + (i*3600) + "'"; 
-                recommendStartHours += ">1 hour</option>\n";
-
-                recommendLengthHours += "<option value='" + (i*3600) + "'"; 
-                recommendLengthHours += "selected='selected'";
-                recommendLengthHours += ">1 hour</option>\n";       
-            }
-            else
-            {
-                recommendStartHours += "<option value='" + (i*3600) + "'"; 
-                recommendStartHours += ">" + String(i) + " hours</option>\n";
-                //window.alert("start hours: " + recommendStartHours);
-
-                recommendLengthHours += "<option value='" + (i*3600) + "'"; 
-                recommendLengthHours += ">" + String(i) + " hours</option>\n";
-            }
+            recommendLengthHours += "<option value='" + (i*3600) + "'"; 
+            recommendLengthHours += "selected='selected'";
+            recommendLengthHours += ">1 hour</option>\n";       
         }
-
-        for(i = 0; i < 7; i++) // Populate start-times with days
+        else
         {
-            if(i === 0)
-            {
-                recommendStartDays += "<option value='" + (i*86400) + "'";
-                recommendStartDays += "selected='selected'";
-                recommendStartDays += ">" + String(i) + " days</option>\n";            
+            recommendStartHours += "<option value='" + (i*3600) + "'"; 
+            recommendStartHours += ">" + String(i) + " hours</option>\n";
+            //window.alert("start hours: " + recommendStartHours);
 
-                recommendLengthDays += "<option value='" + (i*86400) + "'";
-                recommendLengthDays += "selected='selected'";
-                recommendLengthDays += ">" + String(i) + " days</option>\n";
-            }
-            else
-            {
-                recommendStartDays += "<option value='" + (i*86400) + "'";
-                recommendStartDays += ">" + String(i) + " days</option>\n";
-
-                recommendLengthDays += "<option value='" + (i*86400) + "'";
-                recommendLengthDays += ">" + String(i) + " days</option>\n";
-            }
-        }
-        recommendStartHours += "</select>";
-        recommendStartDays += "</select>";
-        recommendLengthHours += "</select>";
-        recommendLengthDays += "</select>";
-
-        document.getElementById("recommendStartHours").innerHTML = recommendStartHours; 
-        document.getElementById("recommendStartDays").innerHTML = recommendStartDays;
-        document.getElementById("recommendHours").innerHTML = recommendLengthHours; 
-        document.getElementById("recommendDays").innerHTML = recommendLengthDays; 
-    </script>
-
-    <!--Google Analytics-->
-    <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-      ga('create', 'UA-57342744-1', 'auto');
-      ga('send', 'pageview');
-    </script>
-
-    <script>
-    $("#cityInput2").bind("keypress", {}, keypressInBox);
-
-    function keypressInBox(e) {
-        var code = (e.keyCode ? e.keyCode : e.which);
-        if (code == 13) { //Enter keycode                        
-            e.preventDefault();
-
-            //$("yourFormId").submit();
-            getCityData(this.form);
-
+            recommendLengthHours += "<option value='" + (i*3600) + "'"; 
+            recommendLengthHours += ">" + String(i) + " hours</option>\n";
         }
     }
-    // http://stackoverflow.com/questions/10905345/pressing-enter-on-a-input-type-text-how
-    </script>
+
+    for(i = 0; i < 7; i++) // Populate start-times with days
+    {
+        if(i == 0)
+        {
+            recommendStartDays += "<option value='" + (i*86400) + "'";
+            recommendStartDays += "selected='selected'";
+            recommendStartDays += ">" + String(i) + " days</option>\n";            
+
+            recommendLengthDays += "<option value='" + (i*86400) + "'";
+            recommendLengthDays += "selected='selected'";
+            recommendLengthDays += ">" + String(i) + " days</option>\n";
+        }
+        else
+        {
+            recommendStartDays += "<option value='" + (i*86400) + "'";
+            recommendStartDays += ">" + String(i) + " days</option>\n";
+
+            recommendLengthDays += "<option value='" + (i*86400) + "'";
+            recommendLengthDays += ">" + String(i) + " days</option>\n";
+        }
+    }
+    recommendStartHours += "</select>";
+    recommendStartDays += "</select>";
+    recommendLengthHours += "</select>";
+    recommendLengthDays += "</select>";
+
+    document.getElementById("recommendStartHours").innerHTML = recommendStartHours; 
+    document.getElementById("recommendStartDays").innerHTML = recommendStartDays;
+    document.getElementById("recommendHours").innerHTML = recommendLengthHours; 
+    document.getElementById("recommendDays").innerHTML = recommendLengthDays; 
+</script>
+
+<!--Google Analytics-->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-57342744-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
 
 </body>
 </html>

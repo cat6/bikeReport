@@ -18,7 +18,7 @@ function reportLights($arr)
 	}
 	elseif($arr[0] == 0 && $arr[1] == 0)
 	{
-		$lightRet = "It likely won't be dark during any time that your ride is planned";
+		$lightRet = "It won't be dark during any time that your ride is planned, so lights aren't needed";
 	}
 	else
 	{
@@ -52,8 +52,8 @@ function reportTemp($recommendArr, $tempSuffix)
 		// If we have distinct max and min temperatures
 		if($evalTemperature[3] > ($startTime + (3600*12)))
 		{
-			// Than max temp will occur beyond 24 hours of start
-			$recOutput .= "<li>Temperatures will peak at " . round($evalTemperature[0], 0) . $tempSuffix . " on " . gmdate("l \a\\t g:i a", $evalTemperature[3]); 
+			// Than max temp will occur beyond 12 hours of start
+			$recOutput .= "<li>Temperatures will peak at " . round($evalTemperature[0], 0) . $tempSuffix . " today " . gmdate("\a\\t g:i a", $evalTemperature[3]); 
 			$tempReportFlag = 1;
 		}
 		else
@@ -63,7 +63,7 @@ function reportTemp($recommendArr, $tempSuffix)
 		}
 		if($evalTemperature[4] > ($startTime + (3600*12)))
 		{
-			// Than min temp will occur beyond 24 hrs
+			// Than min temp will occur beyond 12 hrs
 			$recOutput .= ", and go as low as " . round($evalTemperature[1]) . $tempSuffix;
 			if($tempReportFlag = 0)
 			{
@@ -71,12 +71,12 @@ function reportTemp($recommendArr, $tempSuffix)
 			}
 			else
 			{
-				$recOutput .=  " on " . gmdate("l \a\\t g:i a", $evalTemperature[4]) . "</li>";	
+				$recOutput .=  gmdate(" \a\\t g:i a", $evalTemperature[4]) . "</li>";	
 			}
 		}
 		else
 		{
-			// min temp happens within 24 hrs
+			// min temp happens within 12 hrs
 			$recOutput .= ", and go as low as " . round($evalTemperature[1]) . $tempSuffix . " at "; 
 			if($tempReportFlag = 0)
 			{
@@ -194,7 +194,7 @@ function iterate($json, $startTime, $endTime)
 	// Initialize  vars
 	$maxIntensity = 0; $maxTime = 0; $maxType = 'rain'; $maxAccumulation = null; $tempAtMaxTime = 0; $maxPercent = 0;
 	$maxTemp = -100000; $minTemp = 100000; $maxHumidity = 0; $maxTempTime = 0; $minTempTime = 0; $maxHumidTime = 0;
-	$lightsNeeded = 0; $lightsAtStart = 0;
+	$lightsNeeded = 0; $lightsAtStart = 0; $lightsEvalFlag = 0;
 	$dayStartFlag = 0;
 	// $lightsForDusk = 0;
 
@@ -250,7 +250,7 @@ function iterate($json, $startTime, $endTime)
 			{
 				// This is the most intense precipitation period so far
 				$maxIntensity = $datum->precipIntensity;
-				$maxTime = $datum->time;
+				$maxTime = $datum->time + (3600 * $json->offset);
 				$maxType = $datum->precipType;
 				$tempAtMaxTime = $datum->temperature;
 
@@ -285,38 +285,37 @@ function iterate($json, $startTime, $endTime)
 				$maxHumidity = $datum->humidity;
 				$maxHumidTime = $datum->time + (3600 * $json->offset);
 			}
-			//print "max, maxTempTime: " . gmdate("F j, Y, G:i", $maxTempTime) .  " / " .  $maxTemp . "<br/>";
-			//print "min, minTempTime: " . gmdate("F j, Y, G:i", $minTempTime) . " / " . $minTemp . "<br/><br/>";
-			// Lights
-			//$periodCurrently = periodOfDay($datum->time + (3600 * $json->offset));
+		}
+
+		if($lightsEvalFlag === 0)
+		{
 			$periodCurrently = periodOfDay($json, ($datum->time + (3600 * $json->offset)));
-			if(($periodCurrently > 0) && ($periodCurrently  < 3))
+			$periodAtStart = periodOfDay($json, $startTime);
+			$periodAtEnd = periodOfDay($json, $endTime);
+			$darkAtStart = ($periodAtStart > 0 && $periodAtStart < 3);
+			$darkAtEnd = ($periodAtEnd > 0 && $periodAtEnd < 3);
+			//print "time, period: " .   gmdate("D M j \a\\t g:ia", $datum->time + (3600 * $json->offset)) . " / " . $periodCurrently . "<br/>\n";
+			//print "darkAtStart, darkAtEnd: " . $darkAtStart . " / " . $darkAtEnd . "<br/>\n";
+			//if(($periodCurrently > 0) && ($periodCurrently  < 3) && ($datum->time + (3600 * $json->offset) >= $startTime) && ($datum->time + (3600 * $json->offset) <= $endTime))
+			if($darkAtStart || $darkAtEnd)
 			{
-				//if($lightsForDusk = 1) { $lightsForDusk = 0; } // Reset dusk warning if the trip doesn't just touch dusk, but overlaps
-				//print "hourly abs: " . abs($startTime - ($datum->time + (3600 * $json->offset))) < 3600 . "<br/>";
-				if(abs($startTime - ($datum->time + (3600 * $json->offset))) < 3600)
+				if($darkAtStart == True && $darkAtEnd == False)
 				{
 					$lightsAtStart = 1;
+					$lightsNeeded = 1;
 				}
-				$lightsNeeded = 1;
-			}
-			/*
-			$periodIn30 = periodOfDay($json, ($datum->time + 1800 + (3600 * $json->offset)));
-			if(($periodIn30 > 0) && ($periodIn30 < 3) && ($lightsNeeded = 0))
-			{
-				if(abs($startTime - ($datum->time + (3600 * $json->offset))) < 3600)
+				if($darkAtStart == False && $darkAtEnd == True)
 				{
-					$lightsAtStart = 1;
+					$lightsNeeded = 1;
 				}
-				$lightsNeeded = 1;
-				$lightsForDusk = 1;
 			}
-			*/
+			$lightsEvalFlag = 1;
 		}
 	}
-
+	//$diff = $endTime - $json->currently->time;
+	//print "end, current, diff: " . $endTime . " / " . $json->currently->time . " / " . $diff . "<br/>";
 	// Iterate daily
-	if($endTime - $currentTime > 172800) // If the end of the trip is at least 48 hours in the future
+	if($endTime - $json->currently->time > 172800) // If the end of the trip is at least 48 hours in the future
 	{
 		foreach($json->daily->data as $datum)
 		{
@@ -398,7 +397,14 @@ function recommendPeriod($hours)
 	// Returns a string describing a time period, initially input as $hours
 	if($hours <= 24)
 	{
-		return $hours . " hours";
+		if($hours === 1)
+		{
+			return $hours . " hour";
+		}
+		else
+		{
+			return $hours . " hours";
+		}
 	}
 	if($hours % 24 == 0)
 	{

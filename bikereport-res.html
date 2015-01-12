@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Bike Report: Toronto</title>
+<meta charset="utf-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+
+<!-- Google line graph -->
+<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+
+<!-- Bootstrap: Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+
+<!--Main BikeReport CSS-->
+<link rel='stylesheet' href='styles/bikeStyles.css' type='text/css' media='screen' /> 
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style type='text/css'>
+
+@import url(http://fonts.googleapis.com/css?family=Playfair+Display%7CDroid+Serif);
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: "Droid Serif";	
+}
+
+h1 {
+	font-weight: bold;
+}
+#header {
+	font-family: "Playfair Display";
+	font-size: 125%;
+}
+
+#navbar {
+	width: 100%;
+	margin-left: 0px;
+	margin-right: 0px;
+}
+
+#content {
+	margin-left: 0px;
+	margin-right: 0px;
+}
+
+body {
+	font-family: "Droid Serif";
+	font-size: 200%;
+}
+
+
+h2{
+    margin: 0;     
+    color: #666;
+    padding-top: 90px;
+    font-size: 52px;
+    font-family: "trebuchet ms", sans-serif;    
+}
+
+#checkButton2 {
+	padding: 10px;
+}
+
+.item{
+    background: #5D8AA8; 
+    text-align: center;
+    /*height: 300px !important;*/
+}
+.carousel{
+    margin-top: 20px;
+}
+
+.carousel-control 			 { width:  4%; }
+.carousel-control.left,.carousel-control.right {margin-left:15px;background-image:none;}
+@media (max-width: 767px) {
+	.carousel-inner .active.left { left: -100%; }
+	.carousel-inner .next        { left:  100%; }
+	.carousel-inner .prev		 { left: -100%; }
+	.active > div { display:none; }
+	.active > div:first-child { display:block; }
+
+}
+@media (min-width: 767px) and (max-width: 992px ) {
+	.carousel-inner .active.left { left: -50%; }
+	.carousel-inner .next        { left:  50%; }
+	.carousel-inner .prev		 { left: -50%; }
+	.active > div { display:none; }
+	.active > div:first-child { display:block; }
+	.active > div:first-child + div { display:block; }
+}
+@media (min-width: 992px ) {
+	.carousel-inner .active.left { left: -25%; }
+	.carousel-inner .next        { left:  25%; }
+	.carousel-inner .prev		 { left: -25%; }	
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class='container' id='container'>
+
+<div class='row'>
+	<div class='col-xs-12 col-sm-12 col-md-12 col-lg-12' id='header' style="background-image: url(https://maps.googleapis.com/maps/api/staticmap?center=43.533226,-79.3831843&amp;zoom=11&amp;size=600x600);">
+		<h1>Bike Report: Toronto</h1>
+	</div><!--header-->
+</div><!--top row-->
+
+<div class='row'>
+<div class="navbar-inverse navbar-static-top navbar-right" role="navigation" id='navbar'>
+	<div>
+		<ul class="nav navbar-nav">
+		<li><a href="#"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Try Another City</a></li>
+		<li><a href="#"><span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span> Radar</a></li>
+		<li><a href="#"><span class="glyphicon glyphicon-road" aria-hidden="true"></span> Bike-Friendly Routes: Toronto</a></li>
+		<li><a href="#"><span class="glyphicon glyphicon-bookmark" aria-hidden="true"></span> Bookmark</a></li>
+		<li><a href="#"><span class="glyphicon glyphicon-envelope" aria-hidden="true"></span> Contact</a></li>
+		</ul>
+	</div>
+</div><!--navbar-->
+</div><!--row-->
+
+<div class='row'>
+	<div id='content'>
+
+	<div class='row'>
+				<div class='col-md-1 col-lg-1'></div><!--buffer-->
+
+				<div class='col-xs-6 col-sm-6 col-md-1 col-lg-1' >
+
+					<h1>Right Now:</h1>
+					<span class="glyphicon glyphicon-time" aria-hidden="true"></span> <small>Fri Dec 5th, 9:15pm</small>
+
+				</div>
+
+				<!--BIGTOP starts here-->
+
+				<div class='col-xs-6 col-sm-6 col-md-2 col-lg-2 parent'>
+					<div class='hourCell child'>
+							<h1>56&#37; </h1><b>Overall</b>
+					</div>
+				</div>
+
+				<div class='col-xs-6 col-sm-6 col-md-2 col-lg-2'>
+
+				<div class='hourCell' id='bigTemperature'>
+						<div id="thermometer">
+							<div class="track">
+
+				    			<div class="max">
+				        			<div class="amount">40</div>
+				    			</div>
+				    			
+				    			<div class="mid">
+				        			<div class="amount">0</div>
+				    			</div>
+				    			
+				    			<div class="progress">
+				        			<div class="amount" style="display: block;">-2</div>
+				    			</div>
+
+				    			<div class="min">
+				        			<div class="amount">-30</div>
+				    			</div>
+
+							</div>
+						</div>   
+				 <b>Temperature</b><br/><small>Apparent Temp: -6C</small>
+				</div><!--topCell(bigTemperature)-->
+
+				</div><!--col-->
+
+				<div class='col-xs-6 col-sm-6 col-md-2 col-lg-2'>
+					<div class='hourCell' id='bigCompass'>
+					<img src='graphics/redArrow.png' alt='Wind Direction Arrow' id='windArrow' style="transform:rotate(252deg);"/>
+					<br/>
+					<b>Wind: 11 km/hr  (ENE)</b>
+					<br/>
+					</div><!--bigCompass-->
+				</div><!--column-->
+
+				<div class='col-md-3 col-lg-3'>
+					<div class='hourCell'>
+						<img src='graphics/icons/cloudy.png' id='weatherIcon' height='100' width='100' alt='weather icon'/>
+						<br/>
+						<b>Today's Conditions:</b><br/> Overcast. Overcast throughout the day.
+					</div>
+				</div>
+
+			<!--BIGTOP ends-->
+			<div class='col-xs-0 col-sm-0 col-md-1 col-lg-1'></div><!--buffer-->
+
+	</div><!--row: top content-->
+	<br/>
+
+	<div class='row'>
+
+		<div class='col-lg-1'></div>
+
+		<div class='col-lg-10'>
+			<div class='summaryRecommendCell' id='recommendSummary'>
+				<br/>
+				<b>Here are some recomendations for a trip of 1 hours, from Sun Dec 7 at 3:41pm to Sun Dec 7 at 4:41pm:</b> 
+				<br/>
+				<ul>
+					<li>There won't be any precipitation of note, so no need for wet-weather gear.</li>
+					<li>Temperatures will remain steady at -2C</li>
+					<li>It likely won't be dark during any time that your ride is planned</li>
+				</ul>
+				<b>Sunrise:</b> 7:38am <b>Sunset:</b> 4:42pm
+				<br/>
+				<br/>
+			</div><!--recommendations-->
+			</div><!--col recommendations-->
+
+			<div class='col-lg-1'></div>
+
+		</div><!--row recommendations-->
+
+	<br/>
+
+	<div class='row'>
+	<div class='col-lg-12'>
+	<div class='summaryTitleCell' id='dailySummary'>
+
+	<h3><b>In the next few hours:  Overcast throughout the day.</b></h3><br/><br/>
+
+	</div><!--dailySummary-->
+	</div>
+	</div><!--in a few hours-->
+
+
+	<div class='row'>
+	<div class='col-xs-6 col-sm-6 col-md-3 col-lg-3'>
+		<div class='hourCell' style='padding: 10px;'>
+		<h2>2</h2> hours from now: <h2>48%</h2><br/><br/>
+		<img src='graphics/icons/partly-cloudy-night.png' alt='2 hours from now: partly-cloudy-night' height='50' width='50'/><br/><i>Mostly Cloudy</i><br/>
+		<h4>Temp: -3C&deg;</h4>
+		<h4>Feels like: -8C&deg;</h4>
+		<h4>Wind: 14km/hr / ENE</h4><b>-</b></div><!--day dayCell-->
+	</div>
+
+	<div class='col-xs-6 col-sm-6 col-md-3 col-lg-3'>
+		<div class='hourCell' style='padding: 10px;'>
+		<h2>4</h2> hours from now: <h2>40%</h2><br/><br/>
+		<img src='graphics/icons/partly-cloudy-night.png' alt='4 hours from now: partly-cloudy-night' height='50' width='50'/><br/><i>Mostly Cloudy</i><br/>
+		<h4>Temp: -3C&deg;</h4>
+		<h4>Feels like: -9C&deg;</h4>
+		<h4>Wind: 18km/hr / ENE</h4><b>-</b></div><!--day dayCell-->
+	</div>
+
+	<div class='col-xs-6 col-sm-6 col-md-3 col-lg-3'>
+		<div class='hourCell' style='padding: 10px;'>
+		<h2>8</h2> hours from now: <h2>34%</h2><br/><br/>
+		<img src='graphics/icons/cloudy.png' alt='8 hours from now: cloudy' height='50' width='50'/><br/><i>Overcast</i><br/>
+		<h4>Temp: -3C&deg;</h4>
+		<h4>Feels like: -9C&deg;</h4>
+		<h4>Wind: 22km/hr / E</h4><b>-</b></div><!--day dayCell-->
+	</div>
+
+	<div class='col-xs-6 col-sm-6 col-md-3 col-lg-3'>
+		<div class='hourCell' style='padding: 10px;'>
+		<h2>12</h2> hrs from now: <h2>38%</h2><br/><br/>
+		<img src='graphics/icons/cloudy.png' alt='12 hours from now: cloudy' height='50' width='50'/><br/><i>Overcast</i><br/>
+		<h4>Temp: -2C&deg;</h4>
+		<h4>Feels like: -8C&deg;</h4>
+		<h4>Wind: 21km/hr / E</h4><b>-</b></div><!--day dayCell-->
+	</div>
+
+	</div><!--hourly predictions-->
+	<br/>
+	<div class='row'>
+	<div class='col-lg-12'>
+
+ <div id="myCarousel" class="carousel slide" data-interval="5000" data-ride="carousel" data-type="multi">
+    <!-- Carousel items -->
+    <div class="carousel-inner">
+
+    	<div class="item active">
+    	<!--inspired by: http://stackoverflow.com/questions/25340705/bootstrap-3-carousel-with-multiple-items -->
+        <div class="col-md-3 col-sm-6 col-xs-12">
+      	<a href="#">
+      		<!--<img src="http://placehold.it/500/e499e4/fff&amp;text=1" class="img-responsive">-->
+      		<img src='http://images.webcams.travel/preview/1229967390.jpg' alt='webcam image' class="img-responsive" />
+      	</a>
+      	</div>
+    	</div>
+
+	    <div class="item">
+	      <div class="col-md-3 col-sm-6 col-xs-12">
+	      	<a href="#">
+	      		<!--<img src="http://placehold.it/500/e477e4/fff&amp;text=2" class="img-responsive">-->
+	      		<img src='http://images.webcams.travel/preview/1229967248.jpg' alt='webcam image' class="img-responsive"/>
+	      	</a></div>
+	    </div>
+
+	    <div class="item">
+	      <div class="col-md-3 col-sm-6 col-xs-12">
+	      	<a href="#">
+	      		<!--<img src="http://placehold.it/500/eeeeee&amp;text=3" class="img-responsive">-->
+	      		<img src='http://images.webcams.travel/preview/1197918242.jpg' alt='webcam image' class="img-responsive"/>
+	      	</a></div>
+	    </div>
+
+	    <div class="item">
+	      <div class="col-md-3 col-sm-6 col-xs-12">
+	      	<a href="#">
+	      		<!--<img src="http://placehold.it/500/f4f4f4&amp;text=4" class="img-responsive">-->
+	      		<img src='http://images.webcams.travel/preview/1379445275.jpg' alt='webcam image' class="img-responsive"/>
+	      	</a></div>
+	    </div>
+
+	    <div class="item">
+	      <div class="col-md-3 col-sm-6 col-xs-12">
+	      	<a href="#">
+	      		<!--<img src="http://placehold.it/500/f566f5/333&amp;text=5" class="img-responsive">-->
+	      		<img src='http://images.webcams.travel/preview/1229967129.jpg' alt='webcam image' class="img-responsive"/>
+	      	</a></div>
+	    </div>
+
+	    <div class="item">
+	      <div class="col-md-3 col-sm-6 col-xs-12">
+	      	<a href="#">
+	      		<!--<img src="http://placehold.it/500/f477f4/fff&amp;text=6" class="img-responsive">-->
+	      		<img src='http://images.webcams.travel/preview/1229967139.jpg' alt='webcam image' class="img-responsive"/>
+	      	</a></div>
+	    </div>
+
+	    <div class="item">
+	      <div class="col-md-3 col-sm-6 col-xs-12">
+	      	<a href="#">
+	      		<!--<img src="http://placehold.it/500/eeeeee&amp;text=7" class="img-responsive">-->
+	      		<img src='http://images.webcams.travel/preview/1266528947.jpg' alt='webcam image' class="img-responsive" />
+	      	</a></div>
+	    </div>
+
+	    <div class="item">
+	      <div class="col-md-3 col-sm-6 col-xs-12">
+	      	<a href="#">
+	      		<!--<img src="http://placehold.it/500/fcfcfc/333&amp;text=8" class="img-responsive">-->
+	      		<img src='http://images.webcams.travel/preview/1229967212.jpg' alt='webcam image' class="img-responsive"/>
+	      	</a></div>
+	    </div>
+
+        </div><!--carousel inner-->
+        <!-- Carousel nav -->
+        <a class="carousel-control left" href="#myCarousel" data-slide="prev">
+            <span class="glyphicon glyphicon-chevron-left"></span>
+        </a>
+        <a class="carousel-control right" href="#myCarousel" data-slide="next">
+            <span class="glyphicon glyphicon-chevron-right"></span>
+        </a>
+</div><!--carousel-->
+
+</div><!--column-->
+</div><!--row-->
+
+<br/>
+	<div class='row'>
+	<div class='col-lg-12'><b>This Week</b></div>
+	</div><!--row-->
+
+<div class='row'>
+
+	<div class='col-md-4 col-lg-4'>
+
+		<div class='dayCell'><b>Sun: </b>58%<br/>
+		<img src='graphics/icons/partly-cloudy-night.png' alt='Current Weather: partly-cloudy-night' height='50' width='50'/><br/>-1&deg;C Max<br/>
+		-5&deg;C Min<br/><br/>
+		12 km/hr / NE<br/><br/>
+		Feels like:<br/>-9.99&deg;C to -5.45&deg;C<br/><br/>
+		<b>-</b><br/><br/><b>Mostly cloudy starting in the afternoon.</b><br/>
+		</div><!--dayCell-->
+
+	</div>
+	<div class='col-md-4 col-lg-4'>
+
+		<div class='dayCell'><b>Mon: </b>52%<br/>
+		<img src='graphics/icons/cloudy.png' alt='Current Weather: cloudy' height='50' width='50'/><br/>3&deg;C Max<br/>
+		-3&deg;C Min<br/><br/>
+		19 km/hr / ESE<br/><br/>
+		Feels like:<br/>-9.02&deg;C to -1.84&deg;C<br/><br/>
+		<b>-</b><br/><br/><b>Overcast throughout the day.</b><br/>
+		</div><!--dayCell-->
+
+	</div>
+	<div class='col-md-4 col-lg-4'>
+
+		<div class='dayCell'><b>Tue: </b>77%<br/>
+		<img src='graphics/icons/partly-cloudy-day.png' alt='Current Weather: partly-cloudy-day' height='50' width='50'/><br/>3&deg;C Max<br/>
+		1&deg;C Min<br/><br/>
+		7 km/hr / NNE<br/><br/>
+		Feels like:<br/>-4.72&deg;C to 0.29&deg;C<br/><br/>
+		<b>Rain:</b> Less than 1mm<br/><br/><b>Mostly cloudy throughout the day.</b><br/>
+		</div><!--dayCell-->
+
+	</div>
+
+	<div class='col-md-3 col-lg-3'>
+
+		<div class='dayCell'><b>Wed: </b>10%<br/>
+		<img src='graphics/icons/snow.png' alt='Current Weather: snow' height='50' width='50'/><br/>1&deg;C Max<br/>
+		-3&deg;C Min<br/><br/>
+		31 km/hr / NNW<br/><br/>
+		Feels like:<br/>-9.91&deg;C to -5.48&deg;C<br/><br/>
+		<b>Snow:</b> 5cm<br/><br/><b>Light snow (1–3 cm.) throughout the day.</b><br/>
+		</div><!--dayCell-->
+
+	</div>
+
+	<div class='col-md-3 col-lg-3'>
+
+		<div class='dayCell'><b>Thu: </b>13%<br/>
+		<img src='graphics/icons/snow.png' alt='Current Weather: snow' height='50' width='50'/><br/>1&deg;C Max<br/>
+		-3&deg;C Min<br/><br/>
+		27 km/hr / NW<br/><br/>
+		Feels like:<br/>-9.94&deg;C to -4.51&deg;C<br/><br/>
+		<b>Snow:</b> 10cm<br/><br/><b>Light snow (2–6 cm.) throughout the day.</b><br/>
+		</div><!--dayCell-->
+
+	</div>
+	<div class='col-md-3 col-lg-3'>
+
+		<div class='dayCell'><b>Fri: </b>61%<br/>
+		<img src='graphics/icons/partly-cloudy-night.png' alt='Current Weather: partly-cloudy-night' height='50' width='50'/><br/>3&deg;C Max<br/>
+		-0&deg;C Min<br/><br/>
+		17 km/hr / WNW<br/><br/>
+		Feels like:<br/>-5.19&deg;C to -1.11&deg;C<br/><br/>
+		<b>Rain:</b> Less than 1mm<br/><br/><b>Partly cloudy in the morning.</b><br/>
+		</div><!--dayCell-->
+
+	</div>
+	<div class='col-xs-12 col-sm-12 col-md-3 col-lg-3'>
+
+		<div class='dayCell'><b>Sat: </b>71%<br/>
+		<img src='graphics/icons/partly-cloudy-day.png' alt='Current Weather: partly-cloudy-day' height='50' width='50'/><br/>4&deg;C Max<br/>
+		0&deg;C Min<br/><br/>
+		13 km/hr / W<br/><br/>
+		Feels like:<br/>-3.44&deg;C to 0.96&deg;C<br/><br/>
+		<b>-</b><br/><br/><b>Mostly cloudy until evening.</b><br/>
+		</div><!--dayCell-->
+
+	</div>
+
+</div><!--bottom weekly weather row-->
+	<div class='row'>
+
+	</div><!--row-->
+	<div class='row'>
+	</div><!--row-->
+	            <div class='row'>
+                <div class='col-xs-12 col-sm-12 col-md-12 col-lg-12 navbar-inverse navbar-default navbar-right'>
+                <footer>
+                    <span style='color: #FAEBD7;'>Copyright 2014</span>
+                </footer>
+                </div>
+            </div><!--row footer-->
+
+	</div><!--content-->
+</div><!--row(content)-->
+
+</div><!--container-->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+<script>
+    $('.carousel').carousel({
+        interval: 7000
+    })
+</script>
+<script>
+$('.carousel[data-type="multi"] .item').each(function(){
+  var next = $(this).next();
+  if (!next.length) {
+    next = $(this).siblings(':first');
+  }
+  next.children(':first-child').clone().appendTo($(this));
+  
+  for (var i=0;i<2;i++) {
+    next=next.next();
+    if (!next.length) {
+    	next = $(this).siblings(':first');
+  	}
+    
+    next.children(':first-child').clone().appendTo($(this));
+  }
+});
+</script>
+       <script>
+        //Based originally on a positive-only "fundraising" type thermometer by "Geeky John" http://jsfiddle.net/GeekyJohn/vQ4Xn/
+        function percentage(goalAmount, minAmount, progressAmount) {
+            var range, compensated, percentageAmount;
+
+            range = (goalAmount + 274) - (minAmount + 274);
+            compensated = (progressAmount + 274) - (minAmount + 274);
+            percentageAmount = (progressAmount + 274) - (minAmount + 274) / range;
+
+            percentageAmount = compensated / range;
+            percentageAmount = percentageAmount * 100;
+
+            return percentageAmount;
+        }
+        /**
+         * Thermometer Progress meter.
+         * This function will update the progress element in the "thermometer"
+         * to the updated percentage.
+         * If no parameters are passed in it will read them from the DOM
+         *
+         * @param {Number} goalAmount The Goal amount, this represents the 100% mark
+         * @param {Number} progressAmount The progress amount is the current amount
+         * @param {Boolean} animate Whether to animate the height or not
+         *
+         */
+        function thermometer(unitChoice, goalAmount, progressAmount, minAmount, animate) {
+            "use strict";
+
+            var $thermo = $("#thermometer"),
+                $progress = $(".progress", $thermo),
+                $goal = $(".max", $thermo),
+                $min = $(".min", $thermo),
+                $mid = $(".mid", $thermo),
+                percentageAmount, midHeight,
+                compensated, midAmount, range, rangePercent;
+
+            // Metric units by default
+            unitChoice = unitChoice || 'C';
+
+            // Adjustment value for the midline marker line (typically the zero on a thermometer)
+            // Change this to move your 'zero' value up or down the thermometer to compensate for size changes
+            var minAdjust = -25;
+
+            // Animate by default
+            var animate = typeof Boolean !== 'undefined' ? animate : true;
+
+            goalAmount = goalAmount || parseFloat($goal.text()),
+            minAmount = minAmount || parseFloat($min.text()),
+            midAmount = midAmount || parseFloat($mid.text()),
+            progressAmount = progressAmount || parseFloat($progress.text()),
+            percentageAmount = Math.min(Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
+
+            //let's format the numbers and put them back in the DOM
+            $goal.find(".amount").text(goalAmount + unitChoice);
+            $progress.find(".amount").text(progressAmount + unitChoice);
+            $mid.find(".amount").text(midAmount + unitChoice);
+            $min.find(".amount").text(minAmount + unitChoice);
+
+            percentageAmount = percentage(goalAmount, minAmount, progressAmount);
+
+            //0 at C: 42.8571;
+
+            midHeight = percentage(goalAmount, minAmount, 0);
+
+            if (unitChoice == "C")
+            {
+            	$("#thermometer .mid").css("height", ((42.8571) + "%"));
+            }
+            else if (unitChoice == "F")
+            {
+            	$("#thermometer .mid").css("height", ((14.28571) + "%"));
+            }
+
+            $("#thermometer .min").css("bottom", (-37 + "%")); 
+
+            //let's set the progress indicator
+            $progress.find(".amount").hide();
+            
+            if (animate !== false) {
+                $progress.animate({
+                    "height": percentageAmount + "%"
+                }, 1200, function () {
+                    $(this).find(".amount").fadeIn(500);
+                });
+            } else {
+                $progress.css({
+                    "height": percentageAmount + "%"
+                });
+                $progress.find(".amount").fadeIn(500);
+            }
+        }
+
+        $(document).ready(function () 
+        {
+            // Call thermometer() without arguments to have it read from the DOM
+            thermometer('C');
+            // ...or with parameters if you want to update it using JavaScript.
+            // You can update live, and choose whether to show the animation
+            // (you might not if the updates are relatively small).
+            //thermometer(50, -21, -30, true);
+        });
+    </script>
+</body>
+
+
+</html>

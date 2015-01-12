@@ -5,12 +5,15 @@
 
 function collectWeatherData($weatherAPIKey, $lat, $lng, $endpointUnits)
 {
+	// Returns a $json object with relevant weather data for the lat/lng and units given
+
 	// Construct the query with our apikey and the query we want to make.
 	$endpoint = "https://api.forecast.io/forecast/" . $weatherAPIKey . "/" . $lat . "," . $lng;
 
+	//print "endpoint: " . $endpoint . "<br/>\n";
+
 	// Modify units based on CA (canada), UK, or US (default if not modified).  SI available, but not used here.
 	$unitSettings = unitChoice($units);
-
 	$endpoint .= $endpointUnits;
 
 	// setup curl to make a call to the endpoint

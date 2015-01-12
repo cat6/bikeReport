@@ -101,6 +101,54 @@ function makeCamArray($data, $camAPIKey)
 	return $camArray;
 }
 
+function makeCamArrayLarge($data, $camAPIKey)
+{
+	// MAKE ENDPOINT URL
+	$lat = $data->latitude;
+	$lng = $data->longitude;
+
+	$endpointCam = "http://api.webcams.travel/rest?method=wct.webcams.list_nearby&lat=";
+	$endpointCam .= $lat;
+	$endpointCam .= "&lng=";
+	$endpointCam .= $lng;
+	$endpointCam .= "&devid=";
+	$endpointCam .= $camAPIKey;
+	$endpointCam .= "&format=json";
+
+	// setup curl to make a call to the endpoint
+	$session = curl_init($endpointCam);
+	// indicates that we want the response back
+	curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
+	// exec curl and get the data back
+	$camData = curl_exec($session);
+
+	// remember to close the curl session once we are finished retrieveing the data
+	curl_close($session);
+
+	// decode the json data to make it easier to parse the php
+	$jsonCam = json_decode($camData);
+	if($search_results === NUL) die('Error parsing json');
+
+	//var_dump($jsonCam);	// TEST
+
+	$camArray = array();	// An array of webcam URLs for the given area
+	for($i = 0; $i < 10; $i++)
+	{
+		if($jsonCam->webcams->webcam[$i]->preview_url != '')
+		{	
+			array_push($camArray, $jsonCam->webcams->webcam[$i]->preview_url);
+		}
+	}
+/*
+	// foreach
+	TESTING ($camArray as $cam)
+	{
+		print "test: " . $cam . "\n";
+	}
+*/
+	return $camArray;
+}
+
 function timeStamp($json)
 {
 	$currentTime = $json->currently->time;	// Unix time stamp for local time

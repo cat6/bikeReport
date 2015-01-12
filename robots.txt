@@ -1,0 +1,5 @@
+User-agent:*
+Disallow: /bikeMail
+Disallow: /cgi-bin
+Disallow: /PHPMailer
+Disallow: /unitTest

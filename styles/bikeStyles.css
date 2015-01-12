@@ -21,22 +21,21 @@
             	color: white;
             	background: #5D8AA8;;
             	border: none;
-            	border: 1px rgba(0,0,0,0.9);
+            	border: 5px rgba(0,0,0,0.9);
             	text-shadow: 1px 1px 3px #666666;
+            	-webkit-border-top-left-radius: 20px;
             	-webkit-border-top-right-radius: 20px;
 				-webkit-border-bottom-left-radius: 20px;
+            	-webkit-border-bottom-right-radius: 20px;
+				-moz-border-radius-topleft: 20px;
 				-moz-border-radius-topright: 20px;
 				-moz-border-radius-bottomleft: 20px;
+				-moz-border-radius-bottomright: 20px;
+				border-top-left-radius: 20px;
 				border-top-right-radius: 20px;
 				border-bottom-left-radius: 20px;
-            }
-
-            .getReportButton
-            {
-            	width: 25%;
-            	height: 2em;
-            	font-size: 100%;
-
+				border-bottom-right-radius: 20px;
+				padding: 10px;
             }
 
             input[type=text] 
@@ -44,7 +43,6 @@
   				border: 1px dotted #999;
   				border-radius: 0;
   				-webkit-appearance: none;
-  				font-size: 150%;
 			}
 
 			input:focus,
@@ -54,11 +52,6 @@
     			outline: none;
 			}
 
-			select
-			{
-				font-size: 150%;
-			}
-
 			#units
 			{
 				font-size: 100%;
@@ -66,18 +59,19 @@
 
             .inputCell {
                 display: table-cell;
-                width: 50%;
+                width: 25%;
+                float: left;
             }
 
             .inputCellBottom {
             	font-size: 100%;
             	padding: 5px;
        			background: rgba(255, 255, 255, .2);
+       			width: 65%;
             }
 
 			#container
 			{
-				/*background: #72A0C1;*/
 				background-repeat: repeat;
 				position: relative;
 				width: 90%;
@@ -91,7 +85,6 @@
 			{
 				color: #FAEBD7;
 				background: #5D8AA8;
-				/*font-family: 'Crimson Text', serif; */
 
 				font-family:'Playfair Display', serif;
 
@@ -190,6 +183,10 @@
 				width: 100%;
 			}
 
+			#bigTop {
+
+			}
+
 			#left{
 			    width:20%;
 			    float:left;
@@ -262,39 +259,17 @@
 				align: center;
 			}
 
-			#bigCompass {
-				text-align: center;
-				vertical-align: middle;
-				background: rgba(255, 255, 255, .2);				
-			}
-
-			#bigConditions {
+			#bigMeta, #bigTemperature, #bigCompass, #bigConditions {
 				text-align: center;
 				vertical-align: middle;
 				background: rgba(255, 255, 255, .5);
 			}
 
-			#bigConditions h1 { font-size: 250%; }
+			#bigMeta h1, #bigTemperature h1, #bigConditions h1  { font-size: 250%; }
 
 			#bigMetaTherm {
 				height: 100%;
 			}
-
-			#bigTemperature {
-				text-align: center;
-				vertical-align: middle;
-				background: rgba(255, 255, 255, .5);
-			}
-
-			#bigTemperature h1 { font-size: 250%; }
-
-			#bigMeta {
-				text-align: center;
-				vertical-align: middle;
-				background: rgba(255, 255, 255, .2);
-			}
-
-			#bigMeta h1 { font-size: 250%; }
 
 			#compassTitle {
 				text-align: top;
@@ -317,7 +292,7 @@
 				overflow: hidden;
 			}
 
-			.hourCell, .dayCell {
+			.hourCell, .dayCell, .weekDayCell {
 				display: table-cell;
 				width: 14%;
 				height: 250px;
@@ -333,11 +308,27 @@
 				border-bottom-left-radius: 20px;
 
 				text-align: center;
-
 			}
 
-			.dayCell {
-				width: 14%;
+			.dayCellRes {
+				background: rgba(255, 255, 255, .2);
+
+				border: 3px solid white;
+
+            	-webkit-border-top-left-radius: 20px;
+            	-webkit-border-top-right-radius: 20px;
+            	-webkit-border-bottom-right-radius: 20px;
+				-webkit-border-bottom-left-radius: 20px;
+				-moz-border-radius-topleft: 20px;
+				-moz-border-radius-topright: 20px;
+				-moz-border-radius-bottomleft: 20px;
+				-moz-border-radius-bottomright: 20px;
+				border-top-left-radius: 20px;
+				border-top-right-radius: 20px;
+				border-bottom-left-radius: 20px;
+				border-bottom-right-radius: 20px;
+
+				text-align: center;
 			}
 
 			.miniCellTop {
@@ -440,11 +431,13 @@
             #thermometer .progress {
                 height:0%;
                 width:100%;
-                background: rgb(20, 100, 20);
                 background: red;
                 position: absolute;
                 bottom:0;
                 left:0;
+                border-radius: 0px;
+                overflow: visible;
+                margin-bottom: 0px;
             }
             #thermometer .max {
                 position:absolute;
@@ -454,11 +447,13 @@
                 position:absolute;
                 color: #C4C4C4;
                 bottom: 0%;
+                margin-bottom: 0px;
             }
             #thermometer .min {
                 position:absolute;
                 bottom:-25%;
                 color: #C4C4C4;
+                margin-bottom: 0px;
             }
             #thermometer .amount {
                 display: inline-block;
@@ -466,6 +461,7 @@
                 border-top:1px solid black;
                 font-family: Trebuchet MS;
                 font-weight: bold;
+                margin-bottom: 0px;
             }
             #thermometer .progress .amount {
                 padding:0 35px 0 5px;
@@ -478,3 +474,35 @@
             .max .amount, .mid .amount, .min .amount {
                 color: #969696;
             }
+
+			.parent {
+			    display: table;
+			    table-layout: fixed;
+			}
+
+			.child {
+			    display:table-cell;
+			    vertical-align:middle;
+			    text-align:center;
+			}
+
+			.indexBox, #report{
+				background: rgba(255, 255, 255, .2);
+				border: 3px solid white;
+            	-webkit-border-top-left-radius: 20px;
+            	-webkit-border-top-right-radius: 20px;
+				-webkit-border-bottom-left-radius: 20px;
+            	-webkit-border-bottom-right-radius: 20px;
+				-moz-border-radius-topleft: 20px;
+				-moz-border-radius-topright: 20px;
+				-moz-border-radius-bottomleft: 20px;
+				-moz-border-radius-bottomright: 20px;
+				border-top-left-radius: 20px;
+				border-top-right-radius: 20px;
+				border-bottom-right-radius: 20px;
+				border-bottom-left-radius: 20px;
+
+				padding: 5px;
+
+				text-align: center;
+			}
